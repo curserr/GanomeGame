@@ -1,164 +1,156 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-    <title>My First Game</title>
+<title>My First Game</title>
 
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: lightblue;
-        }
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background-color: lightblue;
+    }
 
-        #game {
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-            background-color: black;
-        }
-
-        #Player {
-            position: absolute;
-            left: 100px;
-            top: 100px;
-			width: 5vw;
-			height: auto;
-            user-select: none;
-	    -webkit-user-drag: none;	
-        }
-	
-	 .flipped {transform: scaleX(-1);}
-
-        #platform
-        {
-	width:300px;
-        height:3px;
+    #game {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
         background-color: black;
-	}
-        
-    </style>
+    }
+
+    #Player {
+        position: absolute;
+        left: 100px;
+        top: 100px;
+        width: 5vw;
+        height: auto;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+
+    .flipped { transform: scaleX(-1); }
+
+    #platform {
+        width: 300px;
+        height: 3px;
+        background-color: black;
+    }
+</style>
 </head>
 
 <body>
 
-    <div id="game"> 
-        <img id="Player" src="littlegnomeboi2.png"/>
-        
-    </div>
+<div id="game">
+    <img id="Player" src="littlegnomeboi2.png"/>
+</div>
 
-    <script>
+<script>
+    let Player = document.getElementById("Player");
+    let game = document.getElementById("game");
 
-        let Player = document.getElementById("Player");
-        let game = document.getElementById("game");
+    let PlayerX = 0;
+    let PlayerY = window.innerHeight / 2;
+    const OriginalY = PlayerY;
 
-        let PlayerX = 0;
-        let PlayerY = window.innerHeight / 2;
-        const OriginalY = PlayerY;
+    let speed = 4;
+    let JumpSpeed = 5;
+    let JumpHeight = window.innerHeight / 6;
+    let FallSpeed = 2;
 
-        let speed = 4;
-        let JumpSpeed = 0;
-	let JumpHeight = window.innerHeight / 6;
-	let FallSpeed = 2;
-        let PlayerJump = false;
-        let PlayerOnGround = true;
-        let DoubleJump = false;
-	let LeftPlayer = false;
+    let PlayerJump = false;      // true while rising
+    let PlayerOnGround = true;
+    let StartY = PlayerY;        // where the current jump began
+    let JumpsUsed = 0;
+    const MaxJumps = 2;          // 2 = double jump
+    let SpaceWasDown = false;    // used to detect a fresh key press
 
-        let keys = {};
+    let LeftPlayer = false;      // true = facing left
 
-        document.addEventListener("keydown", function(event) {
-            keys[event.key.toLowerCase()] = true;
+    let keys = {};
 
-            if (["arrowup", "arrowdown", "arrowleft", "arrowright"," "].includes(event.key.toLowerCase())) {
-                event.preventDefault();
-            }
-        });
+    document.addEventListener("keydown", function(event) {
+        keys[event.key.toLowerCase()] = true;
 
-        document.addEventListener("keyup", function(event) {
-            keys[event.key.toLowerCase()] = false;
-        });
-
-        function MovePlayer()
-        {
-        	if(OriginalY <= PlayerY)
-            {
-		PlayerOnGround = true;
-                DoubleJump = false;
-            }
-            else PlayerOnGround = false;
-        
-            if (keys["arrowleft"])
-            {
-		LeftPlayer = true; 
-                PlayerX -= speed;
-            }
-
-            if ( keys["arrowright"])
-            {
-		LeftPlayer = false;
-                PlayerX += speed;
-            }
-            
-            if( keys[" "] && (PlayerOnGround || !DoubleJump))
-            {
-            	PlayerJump = true;
-                JumpSpeed = 5;
-                DoubleJump = true;
-            }
-		
-	    player.classList.toggle("flipped",LeftPlayer);
-            if(PlayerJump && JumpSpeed == 5)
-            {
-            	Jump();
-			}
-            
-            if(!PlayerJump && OriginalY > PlayerY)
-            {
-            	Gravity();
-            }
-            
-            if(PlayerY>OriginalY) PlayerY = OriginalY;
-
-            // Keep Player inside the game area
-
-            PlayerX = Math.max(0, Math.min(PlayerX, game.clientWidth - Player.offsetWidth));
-            PlayerY = Math.max(0, Math.min(PlayerY, game.clientHeight - Player.offsetHeight));
-
-            Player.style.left = PlayerX + "px";
-            Player.style.top = PlayerY + "px";
-
-            requestAnimationFrame(MovePlayer);
+        if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(event.key.toLowerCase())) {
+            event.preventDefault();
         }
-        
-        function Jump()
+    });
+
+    document.addEventListener("keyup", function(event) {
+        keys[event.key.toLowerCase()] = false;
+    });
+
+    function MovePlayer()
+    {
+        // Ground check
+        PlayerOnGround = (PlayerY >= OriginalY);
+        if (PlayerOnGround && !PlayerJump) JumpsUsed = 0;
+
+        // Horizontal movement and facing direction
+        if (keys["arrowleft"])
         {
-	    	if(OriginalY - PlayerY < JumpHeight)
-			{
-				PlayerY -= JumpSpeed;
-			}
-            
-            else
-            {
-            	PlayerJump = false;
-            	JumpSpeed = 0;
-            }
-		}
-        
-       function Gravity()
-        {
-	 			PlayerY += FallSpeed;
+            LeftPlayer = true;
+            PlayerX -= speed;
         }
-        
-        
-        //function Gnome(let health, )
-        
 
-        MovePlayer();
-	//setTimeout(gravity,milliseconds)
+        if (keys["arrowright"])
+        {
+            LeftPlayer = false;
+            PlayerX += speed;
+        }
 
-    </script>
+        Player.classList.toggle("flipped", LeftPlayer);
+
+        // Start a jump only on a fresh press of space
+        if (keys[" "] && !SpaceWasDown && JumpsUsed < MaxJumps)
+        {
+            PlayerJump = true;
+            JumpsUsed++;
+            StartY = PlayerY;
+        }
+        SpaceWasDown = !!keys[" "];
+
+        // Rising or falling
+        if (PlayerJump)
+        {
+            Jump();
+        }
+        else if (PlayerY < OriginalY)
+        {
+            Gravity();
+        }
+
+        if (PlayerY > OriginalY) PlayerY = OriginalY;
+
+        // Keep Player inside the game area
+        PlayerX = Math.max(0, Math.min(PlayerX, game.clientWidth - Player.offsetWidth));
+        PlayerY = Math.max(0, Math.min(PlayerY, game.clientHeight - Player.offsetHeight));
+
+        Player.style.left = PlayerX + "px";
+        Player.style.top = PlayerY + "px";
+
+        requestAnimationFrame(MovePlayer);
+    }
+
+    function Jump()
+    {
+        if (StartY - PlayerY < JumpHeight)
+        {
+            PlayerY -= JumpSpeed;
+        }
+        else
+        {
+            PlayerJump = false;
+        }
+    }
+
+    function Gravity()
+    {
+        PlayerY += FallSpeed;
+    }
+
+    MovePlayer();
+</script>
 
 </body>
 </html>
