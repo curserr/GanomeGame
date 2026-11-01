@@ -32,7 +32,7 @@
 	width:300px;
         height:3px;
         background-color: black;
-		}
+	}
         
     </style>
 </head>
@@ -55,11 +55,11 @@
 
         let speed = 4;
         let JumpSpeed = 0;
-		let JumpHeight = 300;
-		let FallSpeed = 2;
+	let JumpHeight = window.innerHeight / 6;
+	let FallSpeed = 2;
         let PlayerJump = false;
         let PlayerOnGround = true;
-        let DoubleJoump = false;
+        let DoubleJump = false;
 
         let keys = {};
 
@@ -115,8 +115,8 @@
 
             // Keep character inside the game area
 
-            x = Math.max(0, Math.min(x, game.clientWidth - character.offsetWidth));
-            y = Math.max(0, Math.min(y, game.clientHeight - character.offsetHeight));
+            PlayerX = Math.max(0, Math.min(x, game.clientWidth - character.offsetWidth));
+            PlayerY = Math.max(0, Math.min(y, game.clientHeight - character.offsetHeight));
 
             character.style.left = PlayerX + "px";
             character.style.top = PlayerY + "px";
