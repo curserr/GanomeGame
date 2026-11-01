@@ -18,58 +18,89 @@
         background-color: black;
     }
 
-    /* All three player sprites share the same positioning rules */
-    #PlayerIdle, #PlayerWalking, #PlayerJumping {
+    /* The player is one div that shows one frame of the sprite sheet at a time */
+    #Player {
         position: absolute;
         left: 100px;
         top: 100px;
         width: 5vw;
-        height: auto;
+        aspect-ratio: 224 / 304;               /* one frame: 224 x 304 px */
+        background-image: url("gnome_sheet_game.png");
+        background-size: 500% 300%;            /* sheet is 5 columns x 3 rows */
+        background-repeat: no-repeat;
+        background-position: 0% 0%;
+        image-rendering: pixelated;
         user-select: none;
-        -webkit-user-drag: none;
-    }
-
-    /* Only the idle sprite is visible for now */
-    #PlayerWalking, #PlayerJumping {
-        display: none;
     }
 
     .flipped { transform: scaleX(-1); }
-
-    /* Placeholder position, adjust to fit your terrain image */
-    #Platform {
-        position: absolute;
-        left: 0;
-        top: calc(50vh + 5vw);
-        width: 300px;
-        height: auto;
-        user-select: none;
-        -webkit-user-drag: none;
-    }
 </style>
 </head>
 
 <body>
 
 <div id="game">
-    <img id="PlayerIdle" src="littlegnomeboi2.png"/>
-    <img id="PlayerWalking"/>
-    <img id="PlayerJumping"/>
-    <img id="Platform" src="TerrainPlatform1.png"/>
+    <div id="Player"></div>
     <audio id="bgMusic1" src="AmbientBackground1.mp3" loop></audio>
 </div>
 
 <script>
-    let CurrentRoom = 0;
+    let game   = document.getElementById("game");
+    let Player = document.getElementById("Player");
 
-    let game          = document.getElementById("game");
-    let PlayerIdle    = document.getElementById("PlayerIdle");
-    let PlayerWalking = document.getElementById("PlayerWalking");
-    let PlayerJumping = document.getElementById("PlayerJumping");
+    // ---------- Sprite sheet ----------
+    const SheetCols = 5;
+    const SheetRows = 3;
 
-    // Every sprite gets the same position and flip, so switching sprites later is easy
-    let PlayerSprites = [PlayerIdle, PlayerWalking, PlayerJumping];
+    // Frame numbers count left to right, top to bottom (0 to 13)
+    const IdleFrame   = 0;
+    const WalkFrames  = [0, 1, 2, 3, 4];      // first row
+    const RiseFrame   = 6;                    // going up on the first jump
+    const FallFrame   = 8;                    // coming down
+    const SpinFrames  = [10, 11, 12, 13];     // double jump tumble (bottom row)
 
+    const AnimDelay = 6;      // game frames per animation frame (bigger = slower)
+    let AnimTimer = 0;
+    let AnimIndex = 0;
+
+    function ShowFrame(frame)
+    {
+        let col = frame % SheetCols;
+        let row = Math.floor(frame / SheetCols);
+        let xPercent = col * 100 / (SheetCols - 1);
+        let yPercent = row * 100 / (SheetRows - 1);
+        Player.style.backgroundPosition = xPercent + "% " + yPercent + "%";
+    }
+
+    // Steps through a list of frames at the animation speed and returns the current one
+    function Animate(list)
+    {
+        AnimTimer++;
+        if (AnimTimer >= AnimDelay)
+        {
+            AnimTimer = 0;
+            AnimIndex = (AnimIndex + 1) % list.length;
+        }
+        return list[AnimIndex % list.length];
+    }
+
+    // Picks which frame to show based on what the player is doing
+    function ChooseFrame()
+    {
+        if (!PlayerOnGround)
+        {
+            if (JumpsUsed >= 2) return Animate(SpinFrames);      // double jump
+            return PlayerJump ? RiseFrame : FallFrame;           // first jump
+        }
+
+        if (PlayerMove) return Animate(WalkFrames);
+
+        AnimIndex = 0;
+        AnimTimer = 0;
+        return IdleFrame;
+    }
+
+    // ---------- Player state ----------
     let PlayerX = 0;
     let PlayerY = window.innerHeight / 2;
     const OriginalY = PlayerY;
@@ -126,18 +157,14 @@
             PlayerX += speed;
         }
 
-        // Later: switch to the walking sprite here
-        if (PlayerOnGround && PlayerMove)
-        {
-            // show PlayerWalking, hide the others
-        }
-
         // Start a jump only on a fresh press of space
         if (keys[" "] && !SpaceWasDown && JumpsUsed < MaxJumps)
         {
             PlayerJump = true;
             JumpsUsed++;
             StartY = PlayerY;
+            AnimIndex = 0;       // restart the spin from its first frame
+            AnimTimer = 0;
         }
         SpaceWasDown = !!keys[" "];
 
@@ -154,16 +181,19 @@
         if (PlayerY > OriginalY) PlayerY = OriginalY;
 
         // Keep the player inside the game area
-        PlayerX = Math.max(0, Math.min(PlayerX, game.clientWidth - PlayerIdle.offsetWidth));
-        PlayerY = Math.max(0, Math.min(PlayerY, game.clientHeight - PlayerIdle.offsetHeight));
+        PlayerX = Math.max(0, Math.min(PlayerX, game.clientWidth - Player.offsetWidth));
+        PlayerY = Math.max(0, Math.min(PlayerY, game.clientHeight - Player.offsetHeight));
 
-        // Copy the JS numbers onto every sprite
-        for (let sprite of PlayerSprites)
-        {
-            sprite.style.left = PlayerX + "px";
-            sprite.style.top = PlayerY + "px";
-            sprite.classList.toggle("flipped", LeftPlayer);
-        }
+        // Update the ground state after moving, so the frame matches this frame's position
+        PlayerOnGround = (PlayerY >= OriginalY);
+
+        // Copy the JS numbers onto the element
+        Player.style.left = PlayerX + "px";
+        Player.style.top = PlayerY + "px";
+        Player.classList.toggle("flipped", LeftPlayer);
+
+        // Pick the sprite frame
+        ShowFrame(ChooseFrame());
 
         requestAnimationFrame(MovePlayer);
     }
@@ -187,7 +217,8 @@
 
     MovePlayer();
 
-    // Background music: browsers only allow sound after the first key press or click
+    // ---------- Background music ----------
+    // Browsers only allow sound after the first key press or click
     let bgMusic = document.getElementById("bgMusic1");
     bgMusic.volume = 0.4;   // 0 to 1
 
