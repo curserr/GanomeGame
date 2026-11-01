@@ -115,8 +115,8 @@
 
             // Keep character inside the game area
 
-            PlayerX = Math.max(0, Math.min(x, game.clientWidth - character.offsetWidth));
-            PlayerY = Math.max(0, Math.min(y, game.clientHeight - character.offsetHeight));
+            PlayerX = Math.max(0, Math.min(PlayerX, game.clientWidth - character.offsetWidth));
+            PlayerY = Math.max(0, Math.min(PlayerY, game.clientHeight - character.offsetHeight));
 
             character.style.left = PlayerX + "px";
             character.style.top = PlayerY + "px";
