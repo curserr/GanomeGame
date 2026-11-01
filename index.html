@@ -19,7 +19,7 @@
             background-color: black;
         }
 
-        #player {
+        #Player {
             position: absolute;
             left: 100px;
             top: 100px;
@@ -44,13 +44,13 @@
 <body>
 
     <div id="game"> 
-        <img id="player" src="littlegnomeboi2.png"/>
+        <img id="Player" src="littlegnomeboi2.png"/>
         
     </div>
 
     <script>
 
-        let player = document.getElementById("player");
+        let Player = document.getElementById("Player");
         let game = document.getElementById("game");
 
         let PlayerX = 0;
@@ -65,8 +65,6 @@
         let PlayerOnGround = true;
         let DoubleJump = false;
 	let LeftPlayer = false;
-	let RightPlayer = true;
-
 
         let keys = {};
 
@@ -94,14 +92,12 @@
             if (keys["arrowleft"])
             {
 		LeftPlayer = true; 
-		RightPlayer = false;
                 PlayerX -= speed;
             }
 
             if ( keys["arrowright"])
             {
 		LeftPlayer = false;
-		RightPlayer = true;
                 PlayerX += speed;
             }
             
@@ -112,9 +108,7 @@
                 DoubleJump = true;
             }
 		
-            if(LeftPlayer) player.classList.add("flipped");
-	    else if(RightPlayer) player.classList.add("flipped");	
-
+	    player.classList.toggle("flipped",LeftPlayer);
             if(PlayerJump && JumpSpeed == 5)
             {
             	Jump();
@@ -129,8 +123,8 @@
 
             // Keep Player inside the game area
 
-            PlayerX = Math.max(0, Math.min(PlayerX, game.clientWidth - player.offsetWidth));
-            PlayerY = Math.max(0, Math.min(PlayerY, game.clientHeight - player.offsetHeight));
+            PlayerX = Math.max(0, Math.min(PlayerX, game.clientWidth - Player.offsetWidth));
+            PlayerY = Math.max(0, Math.min(PlayerY, game.clientHeight - Player.offsetHeight));
 
             Player.style.left = PlayerX + "px";
             Player.style.top = PlayerY + "px";
