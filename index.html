@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+    <title>My First Game</title>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: lightblue;
+        }
+
+        #game {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background-color: lightgreen;
+        }
+
+        #character {
+            position: absolute;
+            left: 100px;
+            top: 100px;
+            user-select: none;
+	    -webkit-yser-drag: none;	
+        }
+        
+        #platform
+        {
+		width:300px;
+        height:3px;
+        background-color: black;
+		}
+        
+    </style>
+</head>
+
+<body>
+
+    <div id="game"> 
+        <img id="character" src="littlegnomeboi.png"/>
+        
+    </div>
+
+    <script>
+
+        let character = document.getElementById("character");
+        let game = document.getElementById("game");
+
+        let x = 100;
+        let y = 1000;
+        const OriginalY = 1000;
+
+        let speed = 4;
+        let JumpSpeed = 0;
+		let JumpHeight = 300;
+		let FallSpeed = 2;
+        let PlayerJump = false;
+        let PlayerOnGround = true;
+        let DoubleJoump = false;
+
+        let keys = {};
+
+        document.addEventListener("keydown", function(event) {
+            keys[event.key.toLowerCase()] = true;
+
+            if (["arrowup", "arrowdown", "arrowleft", "arrowright"," "].includes(event.key.toLowerCase())) {
+                event.preventDefault();
+            }
+        });
+
+        document.addEventListener("keyup", function(event) {
+            keys[event.key.toLowerCase()] = false;
+        });
+
+        function MoveCharacter()
+        {
+        	if(OriginalY <= y)
+            {
+				PlayerOnGround = true;
+                DoubleJump = false;
+            }
+            else PlayerOnGround = false;
+        
+            if (keys["arrowleft"])
+            {
+                x -= speed;
+            }
+
+            if ( keys["arrowright"])
+            {
+                x += speed;
+            }
+            
+            if( keys[" "] && (PlayerOnGround || !DoubleJump))
+            {
+            	PlayerJump = true;
+                JumpSpeed = 5;
+                DoubleJump = true;
+            }
+            
+            if(PlayerJump && JumpSpeed == 5)
+            {
+            	Jump();
+			}
+            
+            if(!PlayerJump && OriginalY > y)
+            {
+            	Gravity();
+            }
+            
+            if(y>OriginalY) y = OriginalY;
+
+            // Keep character inside the game area
+
+            x = Math.max(0, Math.min(x, game.clientWidth - character.offsetWidth));
+            y = Math.max(0, Math.min(y, game.clientHeight - character.offsetHeight));
+
+            character.style.left = x + "px";
+            character.style.top = y + "px";
+
+            requestAnimationFrame(MoveCharacter);
+        }
+        
+        function Jump()
+        {
+	    	if(OriginalY - y < JumpHeight)
+			{
+				y -= JumpSpeed;
+			}
+            
+            else
+            {
+            	PlayerJump = false;
+            	JumpSpeed = 0;
+            }
+		}
+        
+       function Gravity()
+        {
+	 			y += FallSpeed;
+        }
+        
+        
+        //function Gnome(let health, )
+        
+
+        MoveCharacter();
+	//setTimeout(gravity,milliseconds)
+
+    </script>
+
+</body>
+</html>
