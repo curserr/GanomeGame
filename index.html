@@ -29,7 +29,7 @@
         
         #platform
         {
-		width:300px;
+	width:300px;
         height:3px;
         background-color: black;
 		}
@@ -49,8 +49,8 @@
         let character = document.getElementById("character");
         let game = document.getElementById("game");
 
-        let x = 100;
-        let y = 1000;
+        let PlayerX = 0;
+        let PlayerY = window.innerHeight / 2;
         const OriginalY = 1000;
 
         let speed = 4;
@@ -77,7 +77,7 @@
 
         function MoveCharacter()
         {
-        	if(OriginalY <= y)
+        	if(OriginalY <= PlayerY)
             {
 				PlayerOnGround = true;
                 DoubleJump = false;
@@ -86,12 +86,12 @@
         
             if (keys["arrowleft"])
             {
-                x -= speed;
+                PlayerX -= speed;
             }
 
             if ( keys["arrowright"])
             {
-                x += speed;
+                PlayerX += speed;
             }
             
             if( keys[" "] && (PlayerOnGround || !DoubleJump))
@@ -106,29 +106,29 @@
             	Jump();
 			}
             
-            if(!PlayerJump && OriginalY > y)
+            if(!PlayerJump && OriginalY > PlayerY)
             {
             	Gravity();
             }
             
-            if(y>OriginalY) y = OriginalY;
+            if(PlayerY>OriginalY) PlayerY = OriginalY;
 
             // Keep character inside the game area
 
             x = Math.max(0, Math.min(x, game.clientWidth - character.offsetWidth));
             y = Math.max(0, Math.min(y, game.clientHeight - character.offsetHeight));
 
-            character.style.left = x + "px";
-            character.style.top = y + "px";
+            character.style.left = PlayerX + "px";
+            character.style.top = PlayerY + "px";
 
             requestAnimationFrame(MoveCharacter);
         }
         
         function Jump()
         {
-	    	if(OriginalY - y < JumpHeight)
+	    	if(OriginalY - PlayerY < JumpHeight)
 			{
-				y -= JumpSpeed;
+				PlayerY -= JumpSpeed;
 			}
             
             else
@@ -140,7 +140,7 @@
         
        function Gravity()
         {
-	 			y += FallSpeed;
+	 			PlayerY += FallSpeed;
         }
         
         
