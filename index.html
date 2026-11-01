@@ -18,7 +18,7 @@
         background-color: black;
     }
 
-    #Player {
+    #PlayerIdle	 {
         position: absolute;
         left: 100px;
         top: 100px;
@@ -41,115 +41,148 @@
 <body>
 
 <div id="game">
-    <img id="Player" src="littlegnomeboi2.png"/>
+    <img id="PlayerIdle" src="littlegnomeboi2.png"/>
+    <img id = "Platform" src = "TerrainPlatform1.png" />
+    <img id = "PlayerWalking" />
+    <img id = "PlayerJumping" />
+    <audio id="bgMusic1" src="AmbientBackground1.mp3" loop></audio>
 </div>
 
 <script>
-    let Player = document.getElementById("Player");
-    let game = document.getElementById("game");
+	let CurrentRoom = 0;	
 
-    let PlayerX = 0;
-    let PlayerY = window.innerHeight / 2;
-    const OriginalY = PlayerY;
+	let PlayerIdle = document.getElementById("PlayerIdle");
+	let game = document.getElementById("game");
+	let PlayerIdle = document.getElementById("PlayerWalking");
 
-    let speed = 4;
-    let JumpSpeed = 5;
-    let JumpHeight = window.innerHeight / 6;
-    let FallSpeed = 2;
+	let PlayerX = 0;
+	let PlayerY = window.innerHeight / 2;
+	const OriginalY = PlayerY;
+	let StartY = PlayerY;        // where the current jump began
 
-    let PlayerJump = false;      // true while rising
-    let PlayerOnGround = true;
-    let StartY = PlayerY;        // where the current jump began
-    let JumpsUsed = 0;
-    const MaxJumps = 2;          // 2 = double jump
-    let SpaceWasDown = false;    // used to detect a fresh key press
+	let speed = 4;
+	let JumpSpeed = 5;
+	let JumpHeight = window.innerHeight / 6;
+	let FallSpeed = 2;
 
-    let LeftPlayer = false;      // true = facing left
+	let PlayerJump = false;      // true while rising
+	let PlayerOnGround = true;
+	let JumpsUsed = 0;
+	const MaxJumps = 2;          // 2 = double jump
+	let SpaceWasDown = false;    // used to detect a fresh key press
+	let PlayerMove = false;	// used to detect whether the character is moving 
 
-    let keys = {};
+	let LeftPlayer = false;      // true = facing left
 
-    document.addEventListener("keydown", function(event) {
-        keys[event.key.toLowerCase()] = true;
+	let keys = {};
+
+	document.addEventListener("keydown", function(event) {
+	keys[event.key.toLowerCase()] = true;
 
         if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(event.key.toLowerCase())) {
             event.preventDefault();
         }
     });
 
-    document.addEventListener("keyup", function(event) {
+	document.addEventListener("keyup", function(event) {
         keys[event.key.toLowerCase()] = false;
     });
 
-    function MovePlayer()
-    {
-        // Ground check
-        PlayerOnGround = (PlayerY >= OriginalY);
-        if (PlayerOnGround && !PlayerJump) JumpsUsed = 0;
+	function MovePlayer()
+    	{
+        	// Ground check
+	        PlayerOnGround = (PlayerY >= OriginalY);
+        	if (PlayerOnGround && !PlayerJump) JumpsUsed = 0;
+	
+		// detect whether the player is moving
+		while(PlayerOnGround && PlayerMove)
+		{
+			
+			
+		}
 
-        // Horizontal movement and facing direction
-        if (keys["arrowleft"])
-        {
-            LeftPlayer = true;
-            PlayerX -= speed;
-        }
 
-        if (keys["arrowright"])
-        {
-            LeftPlayer = false;
-            PlayerX += speed;
-        }
+	        // Horizontal movement and facing direction
+	        if (keys["arrowleft"])
+	        {
+	            LeftPlayer = true;
+	            PlayerX -= speed;
+	        }
+	
+	        if (keys["arrowright"])
+	        {
+	            LeftPlayer = false;
+        	    PlayerX += speed;
+	        }
+	
+	        Player.classList.toggle("flipped", LeftPlayer);
+	
+	        // Start a jump only on a fresh press of space
+	        if (keys[" "] && !SpaceWasDown && JumpsUsed < MaxJumps)
+	        {
+	            PlayerJump = true;
+	            JumpsUsed++;
+	            StartY = PlayerY;
+	        }
+	        SpaceWasDown = !!keys[" "];
+	
+	        // Rising or falling
+	        if (PlayerJump)
+	        {
+	            Jump();
+	        }
+	        else if (PlayerY < OriginalY)
+	        {
+	            Gravity();
+	        }
+	
+	        if (PlayerY > OriginalY) PlayerY = OriginalY;
+	
+	        // Keep Player inside the game area
+	        PlayerX = Math.max(0, Math.min(PlayerX, game.clientWidth - Player.offsetWidth));
+	        PlayerY = Math.max(0, Math.min(PlayerY, game.clientHeight - Player.offsetHeight));
+	
+	        Player.style.left = PlayerX + "px";
+	        Player.style.top = PlayerY + "px";
+	
+	        requestAnimationFrame(MovePlayer);
+	}
+	
+	function Jump()
+	{
+		if (StartY - PlayerY < JumpHeight)
+	        {
+		            PlayerY -= JumpSpeed;
+        	}
+        	else
+        	{
+	            PlayerJump = false;
+        	}
+	}
 
-        Player.classList.toggle("flipped", LeftPlayer);
+    	function Gravity()
+    	{
+     	   PlayerY += FallSpeed;
+    	}
 
-        // Start a jump only on a fresh press of space
-        if (keys[" "] && !SpaceWasDown && JumpsUsed < MaxJumps)
-        {
-            PlayerJump = true;
-            JumpsUsed++;
-            StartY = PlayerY;
-        }
-        SpaceWasDown = !!keys[" "];
+	MovePlayer();
 
-        // Rising or falling
-        if (PlayerJump)
-        {
-            Jump();
-        }
-        else if (PlayerY < OriginalY)
-        {
-            Gravity();
-        }
+	let bgMusic1 = document.getElementById("bgMusic1");
+	bgMusic1.volume = 0.4;   // 0 to 1
 
-        if (PlayerY > OriginalY) PlayerY = OriginalY;
+	function StartMusic()
+	{
+    	bgMusic1.play();
+    	document.removeEventListener("keydown", StartMusic);
+        document.removeEventListener("click", StartMusic);
+	}
 
-        // Keep Player inside the game area
-        PlayerX = Math.max(0, Math.min(PlayerX, game.clientWidth - Player.offsetWidth));
-        PlayerY = Math.max(0, Math.min(PlayerY, game.clientHeight - Player.offsetHeight));
+	document.addEventListener("keydown", UnlockMusic);
+	document.addEventListener("click", UnlockMusic);
 
-        Player.style.left = PlayerX + "px";
-        Player.style.top = PlayerY + "px";
+// Start in the first room
+	//ChangeRoom("start");
 
-        requestAnimationFrame(MovePlayer);
-    }
-
-    function Jump()
-    {
-        if (StartY - PlayerY < JumpHeight)
-        {
-            PlayerY -= JumpSpeed;
-        }
-        else
-        {
-            PlayerJump = false;
-        }
-    }
-
-    function Gravity()
-    {
-        PlayerY += FallSpeed;
-    }
-
-    MovePlayer();
 </script>
 
 </body>
