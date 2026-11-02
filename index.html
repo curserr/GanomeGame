@@ -70,9 +70,9 @@
     const WalkFrames   = [1, 2, 3, 4, 5];     // walk cycle
     const CrouchFrame  = 6;                   // right before leaving the ground
     const RiseFrames   = [7, 8];              // going up (first half, second half)
-    const FallStartFrame = 8;                 // first part of the drop
-    const FallFrames   = [11, 12, 13, 14];    // the tumble, loops during the second part of the drop
-    const TumbleStart  = 0.5;                 // tumble begins after this fraction of the drop (0.5 = halfway)
+    const FallFrames   = [11, 12, 13, 14];    // the tumble poses
+    const SpinStart    = 0.4;                 // fraction of the drop spent stepping through the poses once;
+                                              // after that they loop until landing
 
     const AnimDelay = 6;          // game frames per animation frame (bigger = slower)
     const CrouchLength = 5;       // game frames spent crouching before a ground jump
@@ -83,6 +83,7 @@
     let AnimIndex = 0;
     let CrouchTimer = 0;          // counts down while crouching
     let FallStartY = 0;           // where the fall began (the top of the jump)
+    let Spinning = false;         // true once the fall has reached the looping spin
     let StateName = "idle";       // only used by the debug text
 
     function ShowFrame(frame)
@@ -123,18 +124,27 @@
                 return (risen < JumpHeight / 2) ? RiseFrames[0] : RiseFrames[1];
             }
 
-            // Coming down: hold one pose for the first part of the drop,
-            // then spin through the tumble frames until landing
+            // Coming down. Progress is how far down he has dropped (0 at the top, 1 at the ground).
             let total = OriginalY - FallStartY;
             let progress = (total > 0) ? (PlayerY - FallStartY) / total : 1;
 
-            if (progress < TumbleStart)
+            // First part: step through all the tumble poses once, ending on the last one
+            if (progress < SpinStart)
             {
-                StateName = "falling";
-                return FallStartFrame;
+                StateName = "tumble steps";
+                Spinning = false;
+                let index = Math.floor(progress / SpinStart * FallFrames.length);
+                return FallFrames[Math.min(index, FallFrames.length - 1)];
             }
 
-            StateName = "tumbling";
+            // Rest of the drop: keep cycling through the poses, continuing from the last one
+            if (!Spinning)
+            {
+                Spinning = true;
+                AnimIndex = FallFrames.length - 1;
+                AnimTimer = 0;
+            }
+            StateName = "spinning";
             return Animate(FallFrames);
         }
 
