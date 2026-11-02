@@ -25,15 +25,23 @@
         top: 100px;
         width: 5vw;
         aspect-ratio: 224 / 304;               /* one frame: 224 x 304 px */
-        background-image: url("gnome_sheet_game.png");
+        background-image: url("gnome_sheet_v2.png");
         background-size: 500% 300%;            /* sheet is 5 columns x 3 rows */
         background-repeat: no-repeat;
         background-position: 0% 0%;
-        image-rendering: pixelated;
         user-select: none;
     }
 
     .flipped { transform: scaleX(-1); }
+
+    #Debug {
+        position: absolute;
+        left: 8px;
+        top: 8px;
+        color: white;
+        font: 14px monospace;
+        pointer-events: none;
+    }
 </style>
 </head>
 
@@ -41,12 +49,14 @@
 
 <div id="game">
     <div id="Player"></div>
+    <div id="Debug"></div>
     <audio id="bgMusic1" src="AmbientBackground1.mp3" loop></audio>
 </div>
 
 <script>
-    let game   = document.getElementById("game");
-    let Player = document.getElementById("Player");
+    let game     = document.getElementById("game");
+    let Player   = document.getElementById("Player");
+    let DebugBox = document.getElementById("Debug");
 
     // ---------- Sprite sheet ----------
     const SheetCols = 5;
@@ -67,9 +77,13 @@
     const CrouchLength = 5;       // game frames spent crouching before a ground jump
     const LandingDistance = 30;   // pixels above the ground where the landing frame starts
 
+    const ShowDebug = true;       // shows the current frame number top-left (press D to toggle)
+
     let AnimTimer = 0;
     let AnimIndex = 0;
     let CrouchTimer = 0;          // counts down while crouching
+    let FallStartY = 0;           // where the fall began (the top of the jump)
+    let StateName = "idle";       // only used by the debug text
 
     function ShowFrame(frame)
     {
@@ -96,7 +110,7 @@
     function ChooseFrame()
     {
         // 1. Crouching just before a jump
-        if (CrouchTimer > 0) return CrouchFrame;
+        if (CrouchTimer > 0) { StateName = "crouch"; return CrouchFrame; }
 
         // 2. In the air
         if (!PlayerOnGround)
@@ -104,18 +118,32 @@
             if (PlayerJump)
             {
                 // Going up: first half of the rise uses one frame, second half the other
+                StateName = "rising";
                 let risen = StartY - PlayerY;
                 return (risen < JumpHeight / 2) ? RiseFrames[0] : RiseFrames[1];
             }
 
-            // Coming down: landing frame near the ground, tumble frames before that
-            if (OriginalY - PlayerY <= LandingDistance) return LandingFrame;
-            return Animate(FallFrames);
+            // Coming down: landing frame near the ground
+            if (OriginalY - PlayerY <= LandingDistance)
+            {
+                StateName = "landing";
+                return LandingFrame;
+            }
+
+            // Tumble frames: each one is shown once, in order, spread over the fall.
+            // The last one is held until the landing frame, so nothing snaps back to the start.
+            StateName = "falling";
+            let total = (OriginalY - LandingDistance) - FallStartY;
+            let done  = PlayerY - FallStartY;
+            let index = (total > 0) ? Math.floor(done / total * FallFrames.length) : 0;
+            index = Math.max(0, Math.min(index, FallFrames.length - 1));
+            return FallFrames[index];
         }
 
         // 3. On the ground
-        if (PlayerMove) return Animate(WalkFrames);
+        if (PlayerMove) { StateName = "walking"; return Animate(WalkFrames); }
 
+        StateName = "idle";
         AnimIndex = 0;
         AnimTimer = 0;
         return IdleFrame;
@@ -145,6 +173,8 @@
 
     document.addEventListener("keydown", function(event) {
         keys[event.key.toLowerCase()] = true;
+
+        if (event.key.toLowerCase() === "d") DebugBox.style.display = (DebugBox.style.display === "none") ? "block" : "none";
 
         // A fresh press (not key repeat) asks for one jump
         if (event.key === " " && !event.repeat) JumpRequested = true;
@@ -228,7 +258,10 @@
         Player.classList.toggle("flipped", LeftPlayer);
 
         // Pick the sprite frame
-        ShowFrame(ChooseFrame());
+        let frame = ChooseFrame();
+        ShowFrame(frame);
+
+        if (ShowDebug) DebugBox.textContent = "frame " + frame + "  (" + StateName + ")";
 
         requestAnimationFrame(MovePlayer);
     }
@@ -242,6 +275,7 @@
         else
         {
             PlayerJump = false;
+            FallStartY = PlayerY;
         }
     }
 
