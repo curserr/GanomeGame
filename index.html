@@ -25,7 +25,7 @@
         top: 100px;
         width: 5vw;
         aspect-ratio: 224 / 304;               /* one frame: 224 x 304 px */
-        background-image: url("gnome_sheet_game.png");
+        background-image: url("gnome_sheet_v2.png");
         background-size: 500% 300%;            /* sheet is 5 columns x 3 rows */
         background-repeat: no-repeat;
         background-position: 0% 0%;
@@ -53,16 +53,23 @@
     const SheetRows = 3;
 
     // Frame numbers count left to right, top to bottom (0 to 14)
-    const IdleFrame   = 0;                    // the standalone idle pose
-    const WalkFrames  = [1, 2, 3, 4, 5];      // walk cycle
-    const RiseFrame       = 7;                // going up on the first jump
-    const DoubleRiseFrame = 8;                // going up on the double jump
-    const FallFrame       = 9;                // coming down (both jumps)
-    // Frames 10 to 14 (the bottom row) look like a fall or dive, so they are not used yet
+    //   row 1: 0  1  2  3  4
+    //   row 2: 5  6  7  8  9
+    //   row 3: 10 11 12 13 14
+    const IdleFrame    = 0;                   // standing still
+    const WalkFrames   = [1, 2, 3, 4, 5];     // walk cycle
+    const CrouchFrame  = 6;                   // right before leaving the ground
+    const RiseFrames   = [7, 8];              // going up (first half, second half)
+    const FallFrames   = [11, 12, 13, 14];    // coming down, the tumble
+    const LandingFrame = 10;                  // right before touching the ground
 
-    const AnimDelay = 6;      // game frames per animation frame (bigger = slower)
+    const AnimDelay = 6;          // game frames per animation frame (bigger = slower)
+    const CrouchLength = 5;       // game frames spent crouching before a ground jump
+    const LandingDistance = 30;   // pixels above the ground where the landing frame starts
+
     let AnimTimer = 0;
     let AnimIndex = 0;
+    let CrouchTimer = 0;          // counts down while crouching
 
     function ShowFrame(frame)
     {
@@ -88,12 +95,25 @@
     // Picks which frame to show based on what the player is doing
     function ChooseFrame()
     {
+        // 1. Crouching just before a jump
+        if (CrouchTimer > 0) return CrouchFrame;
+
+        // 2. In the air
         if (!PlayerOnGround)
         {
-            if (!PlayerJump) return FallFrame;                   // coming down
-            return (JumpsUsed >= 2) ? DoubleRiseFrame : RiseFrame; // going up
+            if (PlayerJump)
+            {
+                // Going up: first half of the rise uses one frame, second half the other
+                let risen = StartY - PlayerY;
+                return (risen < JumpHeight / 2) ? RiseFrames[0] : RiseFrames[1];
+            }
+
+            // Coming down: landing frame near the ground, tumble frames before that
+            if (OriginalY - PlayerY <= LandingDistance) return LandingFrame;
+            return Animate(FallFrames);
         }
 
+        // 3. On the ground
         if (PlayerMove) return Animate(WalkFrames);
 
         AnimIndex = 0;
@@ -116,7 +136,7 @@
     let PlayerOnGround = true;
     let JumpsUsed = 0;
     const MaxJumps = 2;          // 2 = double jump
-    let SpaceWasDown = false;    // used to detect a fresh key press
+    let JumpRequested = false;   // set by a fresh space press, used up by the next frame
     let PlayerMove = false;      // true while an arrow key is moving the character
 
     let LeftPlayer = false;      // true = facing left
@@ -126,6 +146,9 @@
     document.addEventListener("keydown", function(event) {
         keys[event.key.toLowerCase()] = true;
 
+        // A fresh press (not key repeat) asks for one jump
+        if (event.key === " " && !event.repeat) JumpRequested = true;
+
         if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(event.key.toLowerCase())) {
             event.preventDefault();
         }
@@ -134,6 +157,15 @@
     document.addEventListener("keyup", function(event) {
         keys[event.key.toLowerCase()] = false;
     });
+
+    function StartJump()
+    {
+        PlayerJump = true;
+        JumpsUsed++;
+        StartY = PlayerY;
+        AnimIndex = 0;       // so the fall tumble starts from its first frame
+        AnimTimer = 0;
+    }
 
     function MovePlayer()
     {
@@ -158,16 +190,18 @@
             PlayerX += speed;
         }
 
-        // Start a jump only on a fresh press of space
-        if (keys[" "] && !SpaceWasDown && JumpsUsed < MaxJumps)
+        // Jumping: crouch first when on the ground, jump straight away in the air
+        if (CrouchTimer > 0)
         {
-            PlayerJump = true;
-            JumpsUsed++;
-            StartY = PlayerY;
-            AnimIndex = 0;       // restart the spin from its first frame
-            AnimTimer = 0;
+            CrouchTimer--;
+            if (CrouchTimer === 0) StartJump();
         }
-        SpaceWasDown = !!keys[" "];
+        else if (JumpRequested && JumpsUsed < MaxJumps)
+        {
+            if (PlayerOnGround) CrouchTimer = CrouchLength;
+            else StartJump();
+        }
+        JumpRequested = false;
 
         // Rising or falling
         if (PlayerJump)
