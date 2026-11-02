@@ -52,12 +52,13 @@
     const SheetCols = 5;
     const SheetRows = 3;
 
-    // Frame numbers count left to right, top to bottom (0 to 13)
-    const IdleFrame   = 0;
-    const WalkFrames  = [0, 1, 2, 3, 4];      // first row
-    const RiseFrame   = 6;                    // going up on the first jump
-    const FallFrame   = 8;                    // coming down
-    const SpinFrames  = [10, 11, 12, 13];     // double jump tumble (bottom row)
+    // Frame numbers count left to right, top to bottom (0 to 14)
+    const IdleFrame   = 0;                    // the standalone idle pose
+    const WalkFrames  = [1, 2, 3, 4, 5];      // walk cycle
+    const RiseFrame       = 7;                // going up on the first jump
+    const DoubleRiseFrame = 8;                // going up on the double jump
+    const FallFrame       = 9;                // coming down (both jumps)
+    // Frames 10 to 14 (the bottom row) look like a fall or dive, so they are not used yet
 
     const AnimDelay = 6;      // game frames per animation frame (bigger = slower)
     let AnimTimer = 0;
@@ -89,8 +90,8 @@
     {
         if (!PlayerOnGround)
         {
-            if (JumpsUsed >= 2) return Animate(SpinFrames);      // double jump
-            return PlayerJump ? RiseFrame : FallFrame;           // first jump
+            if (!PlayerJump) return FallFrame;                   // coming down
+            return (JumpsUsed >= 2) ? DoubleRiseFrame : RiseFrame; // going up
         }
 
         if (PlayerMove) return Animate(WalkFrames);
@@ -109,7 +110,7 @@
     let speed = 4;
     let JumpSpeed = 5;
     let JumpHeight = window.innerHeight / 6;
-    let FallSpeed = 5;
+    let FallSpeed = 2;
 
     let PlayerJump = false;      // true while rising
     let PlayerOnGround = true;
