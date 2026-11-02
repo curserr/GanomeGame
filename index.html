@@ -70,12 +70,12 @@
     const WalkFrames   = [1, 2, 3, 4, 5];     // walk cycle
     const CrouchFrame  = 6;                   // right before leaving the ground
     const RiseFrames   = [7, 8];              // going up (first half, second half)
-    const FallFrames   = [11, 12, 13, 14];    // coming down, the tumble
-    const LandingFrame = 10;                  // right before touching the ground
+    const FallStartFrame = 8;                 // first part of the drop
+    const FallFrames   = [11, 12, 13, 14];    // the tumble, loops during the second part of the drop
+    const TumbleStart  = 0.5;                 // tumble begins after this fraction of the drop (0.5 = halfway)
 
     const AnimDelay = 6;          // game frames per animation frame (bigger = slower)
     const CrouchLength = 5;       // game frames spent crouching before a ground jump
-    const LandingDistance = 30;   // pixels above the ground where the landing frame starts
 
     const ShowDebug = true;       // shows the current frame number top-left (press D to toggle)
 
@@ -123,21 +123,19 @@
                 return (risen < JumpHeight / 2) ? RiseFrames[0] : RiseFrames[1];
             }
 
-            // Coming down: landing frame near the ground
-            if (OriginalY - PlayerY <= LandingDistance)
+            // Coming down: hold one pose for the first part of the drop,
+            // then spin through the tumble frames until landing
+            let total = OriginalY - FallStartY;
+            let progress = (total > 0) ? (PlayerY - FallStartY) / total : 1;
+
+            if (progress < TumbleStart)
             {
-                StateName = "landing";
-                return LandingFrame;
+                StateName = "falling";
+                return FallStartFrame;
             }
 
-            // Tumble frames: each one is shown once, in order, spread over the fall.
-            // The last one is held until the landing frame, so nothing snaps back to the start.
-            StateName = "falling";
-            let total = (OriginalY - LandingDistance) - FallStartY;
-            let done  = PlayerY - FallStartY;
-            let index = (total > 0) ? Math.floor(done / total * FallFrames.length) : 0;
-            index = Math.max(0, Math.min(index, FallFrames.length - 1));
-            return FallFrames[index];
+            StateName = "tumbling";
+            return Animate(FallFrames);
         }
 
         // 3. On the ground
@@ -157,8 +155,8 @@
 
     let speed = 4;
     let JumpSpeed = 5;
-    let JumpHeight = window.innerHeight / 4;
-    let FallSpeed = 4;
+    let JumpHeight = window.innerHeight / 6;
+    let FallSpeed = 2;
 
     let PlayerJump = false;      // true while rising
     let PlayerOnGround = true;
