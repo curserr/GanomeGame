@@ -367,6 +367,53 @@
     // Add new things here (items, defeated bosses, switches) and they are saved automatically.
     const SaveKey = "gnomeGameSave";
  
+        const Rooms = {
+        start: {
+            name: "Start",
+            background: "black",
+            music: "AmbientBackground1.mp3",
+            exits: { right: "room2" }
+        },
+        room2: {
+            name: "Room 2",
+            background: "linear-gradient(#1b1030, #3a1d5c)",
+            music: "AmbientBackground1.mp3",      // change this file name to give the room its own music
+            exits: { left: "start" }
+        }
+    };
+ 
+    let CurrentRoomName = "start";
+    let CurrentRoom = Rooms.start;
+ 
+    // side: "left" or "right" = which edge of the new room the player appears at (leave out to keep the position)
+    function ChangeRoom(roomName, side)
+    {
+        if (!Rooms[roomName]) roomName = "start";
+ 
+        CurrentRoomName = roomName;
+        CurrentRoom = Rooms[roomName];
+        Save.room = roomName;                     // so the room is part of the save
+ 
+        game.style.background = CurrentRoom.background;
+ 
+        // Only switch the track if it is actually a different file, so shared music doesn't restart
+        if (CurrentRoom.music && bgMusic.getAttribute("src") !== CurrentRoom.music)
+        {
+            bgMusic.src = CurrentRoom.music;
+            if (MusicOn) bgMusic.play().catch(function() {});
+        }
+ 
+        if (side === "left")  PlayerX = 0;
+        if (side === "right") PlayerX = game.clientWidth - Player.offsetWidth;
+    }
+ 
+	    // ---------- Save data and menu ----------
+    // Everything that counts as progress lives in this one object.
+    // Add new things here (items, defeated bosses, switches) and they are saved automatically.
+    const SaveKey = "gnomeGameSave";
+
+
+
     let Save = {
         version: 1,
         room: "start",         // later: the room the player is in
