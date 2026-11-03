@@ -104,6 +104,7 @@
     <div id="Player"></div>
     <div id="Debug"></div>
     <audio id="bgMusic1" src="AmbientBackground1.mp3" loop></audio>
+    <audio id="bgMusic2" src="DarkPartsMusic.mpe3" loop></audio>
     <div id="Hint">Esc = menu</div>
     <div id="Menu">
         <div id="MenuBox">
@@ -113,6 +114,7 @@
             <button id="BtnLoad">Load game</button>
             <p id="MenuStatus"></p>
         </div>
+</div>
 </div>
 
 <script>
@@ -323,6 +325,11 @@
 
         if (PlayerY > OriginalY) PlayerY = OriginalY;
 
+        // Walking off the edge of the screen goes to the neighbouring room
+        let maxX = game.clientWidth - Player.offsetWidth;
+        if (PlayerX > maxX && CurrentRoom.exits.right) ChangeRoom(CurrentRoom.exits.right, "left");
+        else if (PlayerX < 0 && CurrentRoom.exits.left) ChangeRoom(CurrentRoom.exits.left, "right");
+
         // Keep the player inside the game area
         PlayerX = Math.max(0, Math.min(PlayerX, game.clientWidth - Player.offsetWidth));
         PlayerY = Math.max(0, Math.min(PlayerY, game.clientHeight - Player.offsetHeight));
@@ -339,7 +346,7 @@
         let frame = ChooseFrame();
         ShowFrame(frame);
 
-        if (ShowDebug) DebugBox.textContent = "frame " + frame + "  (" + StateName + ")";
+        if (ShowDebug) DebugBox.textContent = "frame " + frame + "  (" + StateName + ")  room: " + CurrentRoom.name;
 
         requestAnimationFrame(MovePlayer);
     }
@@ -362,12 +369,28 @@
         PlayerY += FallSpeed;
     }
 
-	    // ---------- Save data and menu ----------
-    // Everything that counts as progress lives in this one object.
-    // Add new things here (items, defeated bosses, switches) and they are saved automatically.
-    const SaveKey = "gnomeGameSave";
- 
-        const Rooms = {
+    // ---------- Background music ----------
+    // Browsers only allow sound after the first key press or click
+    let bgMusic = document.getElementById("bgMusic1");
+    bgMusic.volume = 0.4;   // 0 to 1
+
+    let MusicOn = false;    // becomes true after the first key press or click
+
+    function StartMusic()
+    {
+        MusicOn = true;
+        bgMusic.play();
+        document.removeEventListener("keydown", StartMusic);
+        document.removeEventListener("click", StartMusic);
+    }
+
+    document.addEventListener("keydown", StartMusic);
+    document.addEventListener("click", StartMusic);
+
+    // ---------- Rooms ----------
+    // Each room is one screen. "exits" says which room you reach by walking off the left or right edge.
+    // To add a room: add an entry here and point an exit of a neighbouring room at it.
+    const Rooms = {
         start: {
             name: "Start",
             background: "black",
@@ -377,43 +400,41 @@
         room2: {
             name: "Room 2",
             background: "linear-gradient(#1b1030, #3a1d5c)",
-            music: "AmbientBackground1.mp3",      // change this file name to give the room its own music
+            music: "DarkPartsMusic.mp3",      // change this file name to give the room its own music
             exits: { left: "start" }
         }
     };
- 
+
     let CurrentRoomName = "start";
     let CurrentRoom = Rooms.start;
- 
+
     // side: "left" or "right" = which edge of the new room the player appears at (leave out to keep the position)
     function ChangeRoom(roomName, side)
     {
         if (!Rooms[roomName]) roomName = "start";
- 
+
         CurrentRoomName = roomName;
         CurrentRoom = Rooms[roomName];
         Save.room = roomName;                     // so the room is part of the save
- 
+
         game.style.background = CurrentRoom.background;
- 
+
         // Only switch the track if it is actually a different file, so shared music doesn't restart
         if (CurrentRoom.music && bgMusic.getAttribute("src") !== CurrentRoom.music)
         {
             bgMusic.src = CurrentRoom.music;
             if (MusicOn) bgMusic.play().catch(function() {});
         }
- 
+
         if (side === "left")  PlayerX = 0;
         if (side === "right") PlayerX = game.clientWidth - Player.offsetWidth;
     }
- 
+
 	    // ---------- Save data and menu ----------
     // Everything that counts as progress lives in this one object.
     // Add new things here (items, defeated bosses, switches) and they are saved automatically.
     const SaveKey = "gnomeGameSave";
-
-
-
+ 
     let Save = {
         version: 1,
         room: "start",         // later: the room the player is in
@@ -484,7 +505,7 @@
         JumpRequested = false;
         Spinning = false;
  
-        // Later, when rooms exist: ChangeRoom(Save.room);
+        ChangeRoom(Save.room);
     }
  
     function LoadGame()
@@ -524,22 +545,9 @@
         MenuStatus.textContent = "Saved game found. Press Load to continue.";
     }
  
+    ChangeRoom("start");
     MovePlayer();
 
-    // ---------- Background music ----------
-    // Browsers only allow sound after the first key press or click
-    let bgMusic = document.getElementById("bgMusic1");
-    bgMusic.volume = 0.4;   // 0 to 1
-
-    function StartMusic()
-    {
-        bgMusic.play();
-        document.removeEventListener("keydown", StartMusic);
-        document.removeEventListener("click", StartMusic);
-    }
-
-    document.addEventListener("keydown", StartMusic);
-    document.addEventListener("click", StartMusic);
 </script>
 
 </body>
