@@ -117,8 +117,8 @@
     // Anything that is interface (menus, dialogue, health bars, text) is HTML and CSS in the #ui layer.
     //
     // The canvas always fills the whole window. W and H are its size in pixels and are updated on resize.
-    let W = window.innerWidth;
-    let H = window.innerHeight;
+    let WindowWidth = window.innerWidth;
+    let WindowHeight = window.innerHeight;
 
     let canvas = document.getElementById("game");
     let ctx = canvas.getContext("2d");
@@ -127,14 +127,14 @@
     // so the picture stays crisp, but everything is still measured in normal window pixels (W x H).
     function SizeCanvas()
     {
-        W = window.innerWidth;
-        H = window.innerHeight;
+        WindowWidth = window.innerWidth;
+        WindowHeight = window.innerHeight;
 
         let dpr = window.devicePixelRatio || 1;
-        canvas.width  = Math.round(W * dpr);
-        canvas.height = Math.round(H * dpr);
-        canvas.style.width  = W + "px";
-        canvas.style.height = H + "px";
+        canvas.width  = Math.round(WindowWidth * dpr);
+        canvas.height = Math.round(WindowHeight * dpr);
+        canvas.style.width  = WindowWidth + "px";
+        canvas.style.height = WindowHeight + "px";
 
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.imageSmoothingEnabled = true;
@@ -151,8 +151,8 @@
     let SheetImg = new Image();
     SheetImg.src = "gnome_sheet_v2.png";
 
-    let PlayerW = W * 0.05;                   // the player is 5% of the window width wide
-    let PlayerH = PlayerW * FrameH / FrameW;  // the height follows the shape of one frame
+    let PlayerWidth = WindowWidth * 0.05;                   // the player is 5% of the window width wide
+    let PlayerHeight = PlayerWidth * FrameH / FrameW;  // the height follows the shape of one frame
 
     // Frame numbers count left to right, top to bottom (0 to 14)
     //   row 1: 0  1  2  3  4
@@ -244,13 +244,13 @@
 
     // ---------- Player state ----------
     let PlayerX = 0;
-    let PlayerY = H / 2;
+    let PlayerY = WindowHeight / 6;
     let OriginalY = PlayerY;                 // the ground level
     let StartY = PlayerY;        // where the current jump began
 
     let speed = 4;
     let JumpSpeed = 5;
-    let JumpHeight = H / 6;
+    let JumpHeight = WindowHeight / 6;
     let FallSpeed = 2;
 
     let PlayerJump = false;      // true while rising
@@ -346,13 +346,13 @@
         if (PlayerY > OriginalY) PlayerY = OriginalY;
 
         // Walking off the edge of the screen goes to the neighbouring room
-        let maxX = W - PlayerW;
+        let maxX = WindowHeight - PlayerWidth;
         if (PlayerX > maxX && CurrentRoom.exits.right) ChangeRoom(CurrentRoom.exits.right, "left");
         else if (PlayerX < 0 && CurrentRoom.exits.left) ChangeRoom(CurrentRoom.exits.left, "right");
 
         // Keep the player inside the game area
-        PlayerX = Math.max(0, Math.min(PlayerX, W - PlayerW));
-        PlayerY = Math.max(0, Math.min(PlayerY, H - PlayerH));
+        PlayerX = Math.max(0, Math.min(PlayerX, WindowWidth - PlayerWidth));
+        PlayerY = Math.max(0, Math.min(PlayerY, WindowHeight - PlayerHeight));
 
         // Update the ground state after moving, so the frame matches this frame's position
         PlayerOnGround = (PlayerY >= OriginalY);
@@ -467,18 +467,18 @@
         let oldW = W, oldH = H;
         SizeCanvas();
 
-        let sx = W / oldW;
-        let sy = H / oldH;
+        let sx = WindowHeight / oldW;
+        let sy = WindowHeight / oldH;
 
         PlayerX    *= sx;
         PlayerY    *= sy;
         StartY     *= sy;
         FallStartY *= sy;
 
-        OriginalY  = H / 2;
-        JumpHeight = H / 6;
-        PlayerW    = W * 0.05;
-        PlayerH    = PlayerW * FrameH / FrameW;
+        OriginalY  = WindowHeight / 2;
+        JumpHeight = WindowHeight / 6;
+        PlayerWidth    = WindowWidth * 0.05;
+        PlayerHeight    = PlayerW * FrameH / FrameW;
 
         BackgroundFill = MakeBackground(CurrentRoom.background);     // the gradient depends on the height
     });
@@ -506,7 +506,7 @@
     // Copy the current game into the save object, then store it in the browser
     function SaveGame()
     {
-        Save.x = PlayerX / W;
+        Save.x = PlayerX / WindowWidth;
 
         try
         {
@@ -526,7 +526,7 @@
     {
         let x = Number.isFinite(Save.x) ? Math.min(Math.max(Save.x, 0), 1) : 0;
 
-        PlayerX = x * W;
+        PlayerX = x * WindowWidth;
         PlayerY = OriginalY;            // always put him back on the ground
 
         // Reset anything momentary
@@ -674,7 +674,7 @@
     function Draw()
     {
         ctx.fillStyle = BackgroundFill;
-        ctx.fillRect(0, 0, W, H);
+        ctx.fillRect(0, 0, WindowWidth, WindowHeight);
 
         // terrain, enemies and NPCs will go here
 
