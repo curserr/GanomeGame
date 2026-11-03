@@ -8,123 +8,66 @@
     body {
         margin: 0;
         overflow: hidden;
-        background-color: lightblue;
-    }
-
-    #game {
+        background-color: #111;           /* the bars around the game when the window isn't 16:9 */
         width: 100vw;
         height: 100vh;
-        position: relative;
-        background-color: lightgreen;
-    }
-
-    /* The player is one div that shows one frame of the sprite sheet at a time */
-    #Player {
-        position: absolute;
-        left: 100px;
-        top: 100px;
-        width: 5vw;
-        aspect-ratio: 224 / 304;               /* one frame: 224 x 304 px */
-        background-image: url("gnome_sheet_v2.png");
-        background-size: 500% 300%;            /* sheet is 5 columns x 3 rows */
-        background-repeat: no-repeat;
-        background-position: 0% 0%;
-        user-select: none;
-    }
-
-    .flipped { transform: scaleX(-1); }
-
-    #Debug {
-        position: absolute;
-        left: 8px;
-        top: 8px;
-        color: white;
-        font: 14px monospace;
-        pointer-events: none;
-    }
-
-	    /* Pause / save menu */
-    #Menu {
-        position: absolute;
-        inset: 0;
-        display: none;                          /* shown with Esc */
+        display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(0, 0, 0, 0.7);
-        z-index: 10;
-    }
-    #MenuBox{
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        min-width: 240px;
-        padding: 24px 32px;
-        background: #1d1d2b;
-        border: 3px solid #c9a15b;
-        border-radius: 8px;
-        color: white;
-        font-family: monospace;
-        text-align: center;
-    }
- 
-    #MenuBox h2 { margin: 0 0 8px; }
- 
-    #MenuBox button {
-        padding: 10px;
-        font: 16px monospace;
-        color: white;
-        background: #34344d;
-        border: 2px solid #c9a15b;
-        border-radius: 4px;
-        cursor: pointer;
-    }
- 
-    #MenuBox button:hover:not(:disabled) { background: #4a4a6e; }
-    #MenuBox button:disabled { opacity: 0.4; cursor: default; }
- 
-    #MenuStatus { min-height: 1.2em; margin: 4px 0 0; font-size: 14px; color: #c9a15b; }
- 
-    #Hint {
-        position: absolute;
-        right: 8px;
-        top: 8px;
-        color: white;
-        opacity: 0.6;
-        font: 14px monospace;
-        pointer-events: none;
     }
 
-
+    /* The whole game is drawn on this one canvas. Its size on screen is set by FitCanvas() in the script. */
+    canvas {
+        display: block;
+        background: black;
+    }
 </style>
 </head>
 
 <body>
 
-<div id="game">
-    <div id="Player"></div>
-    <div id="Debug"></div>
-    <audio id="bgMusic1" src="AmbientBackground1.mp3" loop></audio>
-    <audio id="bgMusic2" src="DarkPartsMusic.mpe3" loop></audio>
-    <div id="Hint">Esc = menu</div>
-    <div id="Menu">
-        <div id="MenuBox">
-            <h2>Menu</h2>
-            <button id="BtnResume">Resume</button>
-            <button id="BtnSave">Save game</button>
-            <button id="BtnLoad">Load game</button>
-            <p id="MenuStatus"></p>
-        </div>
-</div>
-</div>
+<canvas id="game" width="1280" height="720"></canvas>
+<audio id="bgMusic1" src="AmbientBackground1.mp3" loop></audio>
 
 <script>
-    let game     = document.getElementById("game");
-    let Player   = document.getElementById("Player");
-    let DebugBox = document.getElementById("Debug");
+    // ---------- Canvas ----------
+    // The game has a fixed internal size of W x H. Every position, size and speed below is in these units.
+    // The canvas is then scaled to fit the window, so every room looks the same on every screen.
+    const W = 1280;
+    const H = 720;
+
+    let canvas = document.getElementById("game");
+    let ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    function FitCanvas()
+    {
+        let scale = Math.min(window.innerWidth / W, window.innerHeight / H);
+        canvas.style.width  = Math.floor(W * scale) + "px";
+        canvas.style.height = Math.floor(H * scale) + "px";
+    }
+    window.addEventListener("resize", FitCanvas);
+    FitCanvas();
+
+    // Converts a mouse event into game coordinates (0 to W, 0 to H), whatever the canvas is scaled to
+    function CanvasPoint(event)
+    {
+        let r = canvas.getBoundingClientRect();
+        return { x: (event.clientX - r.left) * W / r.width, y: (event.clientY - r.top) * H / r.height };
+    }
 
     // ---------- Sprite sheet ----------
     const SheetCols = 5;
     const SheetRows = 3;
+    const FrameW = 224;                       // one frame of the sheet, in sheet pixels
+    const FrameH = 304;
+
+    let SheetImg = new Image();
+    SheetImg.src = "gnome_sheet_v2.png";
+
+    const PlayerW = 64;                       // size of the player on screen, in game units
+    const PlayerH = PlayerW * FrameH / FrameW;
 
     // Frame numbers count left to right, top to bottom (0 to 14)
     //   row 1: 0  1  2  3  4
@@ -141,7 +84,7 @@
     const AnimDelay = 6;          // game frames per animation frame (bigger = slower)
     const CrouchLength = 5;       // game frames spent crouching before a ground jump
 
-    const ShowDebug = true;       // shows the current frame number top-left (press D to toggle)
+    let ShowDebug = true;         // shows the current frame number top-left (press D to toggle)
 
     let AnimTimer = 0;
     let AnimIndex = 0;
@@ -150,15 +93,7 @@
     let LandingY;
     let Spinning = false;         // true once the fall has reached the looping spin
     let StateName = "idle";       // only used by the debug text
-
-    function ShowFrame(frame)
-    {
-        let col = frame % SheetCols;
-        let row = Math.floor(frame / SheetCols);
-        let xPercent = col * 100 / (SheetCols - 1);
-        let yPercent = row * 100 / (SheetRows - 1);
-        Player.style.backgroundPosition = xPercent + "% " + yPercent + "%";
-    }
+    let CurrentFrame = 0;         // the sprite frame that gets drawn
 
     // Steps through a list of frames at the animation speed and returns the current one
     function Animate(list)
@@ -224,13 +159,13 @@
 
     // ---------- Player state ----------
     let PlayerX = 0;
-    let PlayerY = window.innerHeight / 2;
+    let PlayerY = H / 2;
     const OriginalY = PlayerY;
     let StartY = PlayerY;        // where the current jump began
 
     let speed = 4;
     let JumpSpeed = 5;
-    let JumpHeight = window.innerHeight / 6;
+    let JumpHeight = H / 6;
     let FallSpeed = 2;
 
     let PlayerJump = false;      // true while rising
@@ -245,16 +180,20 @@
     let keys = {};
 
     document.addEventListener("keydown", function(event) {
-        keys[event.key.toLowerCase()] = true;
+        let key = event.key.toLowerCase();
+        let wasPaused = Paused;          // remember, because the key may close the menu
 
-	if (event.key === "Escape") { if (Paused) CloseMenu(); else OpenMenu(); }
+        keys[key] = true;
 
-        if (event.key.toLowerCase() === "d") DebugBox.style.display = (DebugBox.style.display === "none") ? "block" : "none";
+        if (event.key === "Escape") { if (Paused) CloseMenu(); else OpenMenu(); }
+        else if (Paused) MenuKey(event);
 
-        // A fresh press (not key repeat) asks for one jump
-        if (event.key === " " && !event.repeat) JumpRequested = true;
+        if (key === "d") ShowDebug = !ShowDebug;
 
-        if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(event.key.toLowerCase())) {
+        // A fresh press (not key repeat) asks for one jump, but never while the menu is open
+        if (event.key === " " && !event.repeat && !wasPaused) JumpRequested = true;
+
+        if (["arrowup", "arrowdown", "arrowleft", "arrowright", " ", "enter"].includes(key)) {
             event.preventDefault();
         }
     });
@@ -272,13 +211,9 @@
         AnimTimer = 0;
     }
 
+    // Game logic for one frame: no drawing happens here
     function MovePlayer()
     {
-	if (Paused)
-    	{
-        requestAnimationFrame(MovePlayer);
-        return;
-    	}
         // Ground check
         PlayerOnGround = (PlayerY >= OriginalY);
         if (PlayerOnGround && !PlayerJump) JumpsUsed = 0;
@@ -326,29 +261,19 @@
         if (PlayerY > OriginalY) PlayerY = OriginalY;
 
         // Walking off the edge of the screen goes to the neighbouring room
-        let maxX = game.clientWidth - Player.offsetWidth;
+        let maxX = W - PlayerW;
         if (PlayerX > maxX && CurrentRoom.exits.right) ChangeRoom(CurrentRoom.exits.right, "left");
         else if (PlayerX < 0 && CurrentRoom.exits.left) ChangeRoom(CurrentRoom.exits.left, "right");
 
         // Keep the player inside the game area
-        PlayerX = Math.max(0, Math.min(PlayerX, game.clientWidth - Player.offsetWidth));
-        PlayerY = Math.max(0, Math.min(PlayerY, game.clientHeight - Player.offsetHeight));
+        PlayerX = Math.max(0, Math.min(PlayerX, W - PlayerW));
+        PlayerY = Math.max(0, Math.min(PlayerY, H - PlayerH));
 
         // Update the ground state after moving, so the frame matches this frame's position
         PlayerOnGround = (PlayerY >= OriginalY);
 
-        // Copy the JS numbers onto the element
-        Player.style.left = PlayerX + "px";
-        Player.style.top = PlayerY + "px";
-        Player.classList.toggle("flipped", LeftPlayer);
-
-        // Pick the sprite frame
-        let frame = ChooseFrame();
-        ShowFrame(frame);
-
-        if (ShowDebug) DebugBox.textContent = "frame " + frame + "  (" + StateName + ")  room: " + CurrentRoom.name;
-
-        requestAnimationFrame(MovePlayer);
+        // Pick the sprite frame (Draw() will use it)
+        CurrentFrame = ChooseFrame();
     }
 
     function Jump()
@@ -389,17 +314,18 @@
 
     // ---------- Rooms ----------
     // Each room is one screen. "exits" says which room you reach by walking off the left or right edge.
+    // "background" is one colour, or two colours (top, bottom) for a gradient.
     // To add a room: add an entry here and point an exit of a neighbouring room at it.
     const Rooms = {
         start: {
             name: "Start",
-            background: "lightgreen",
+            background: ["#000000"],
             music: "AmbientBackground1.mp3",
             exits: { right: "room2" }
         },
         room2: {
             name: "Room 2",
-            background: "black",
+            background: ["#1b1030", "#3a1d5c"],
             music: "DarkPartsMusic.mp3",      // change this file name to give the room its own music
             exits: { left: "start" }
         }
@@ -407,6 +333,17 @@
 
     let CurrentRoomName = "start";
     let CurrentRoom = Rooms.start;
+    let BackgroundFill = "black";             // what Draw() paints behind everything
+
+    function MakeBackground(colors)
+    {
+        if (colors.length === 1) return colors[0];
+
+        let gradient = ctx.createLinearGradient(0, 0, 0, H);
+        gradient.addColorStop(0, colors[0]);
+        gradient.addColorStop(1, colors[1]);
+        return gradient;
+    }
 
     // side: "left" or "right" = which edge of the new room the player appears at (leave out to keep the position)
     function ChangeRoom(roomName, side)
@@ -417,7 +354,7 @@
         CurrentRoom = Rooms[roomName];
         Save.room = roomName;                     // so the room is part of the save
 
-        game.style.background = CurrentRoom.background;
+        BackgroundFill = MakeBackground(CurrentRoom.background);
 
         // Only switch the track if it is actually a different file, so shared music doesn't restart
         if (CurrentRoom.music && bgMusic.getAttribute("src") !== CurrentRoom.music)
@@ -427,127 +364,319 @@
         }
 
         if (side === "left")  PlayerX = 0;
-        if (side === "right") PlayerX = game.clientWidth - Player.offsetWidth;
+        if (side === "right") PlayerX = W - PlayerW;
     }
 
-	    // ---------- Save data and menu ----------
+    // ---------- Save data ----------
     // Everything that counts as progress lives in this one object.
     // Add new things here (items, defeated bosses, switches) and they are saved automatically.
     const SaveKey = "gnomeGameSave";
- 
+
     let Save = {
         version: 1,
-        room: "start",         // later: the room the player is in
+        room: "start",         // the room the player is in
         x: 0,                  // horizontal position as a fraction of the screen width (0 to 1)
         health: 3,
         bossesDefeated: [],    // e.g. ["boss1"]
         flags: {}              // e.g. { doorOpened: true }
     };
- 
-    let Paused = false;
- 
-    let Menu       = document.getElementById("Menu");
-    let MenuStatus = document.getElementById("MenuStatus");
-    let BtnResume  = document.getElementById("BtnResume");
-    let BtnSave    = document.getElementById("BtnSave");
-    let BtnLoad    = document.getElementById("BtnLoad");
- 
+
     function HasSave()
     {
         try { return localStorage.getItem(SaveKey) !== null; }
         catch (e) { return false; }     // storage can be blocked (private windows, strict settings)
     }
- 
-    function OpenMenu()
-    {
-        Paused = true;
-        MenuStatus.textContent = "";
-        BtnLoad.disabled = !HasSave();
-        Menu.style.display = "flex";
-    }
- 
-    function CloseMenu()
-    {
-        Paused = false;
-        JumpRequested = false;          // a space press made while paused must not cause a jump
-        Menu.style.display = "none";
-    }
- 
+
     // Copy the current game into the save object, then store it in the browser
     function SaveGame()
     {
-        Save.x = PlayerX / game.clientWidth;
- 
+        Save.x = PlayerX / W;
+
         try
         {
             localStorage.setItem(SaveKey, JSON.stringify(Save));
-            MenuStatus.textContent = "Game saved.";
-            BtnLoad.disabled = false;
+            MenuStatusText = "Game saved.";
+            MenuHasSave = true;
         }
         catch (e)
         {
-            MenuStatus.textContent = "Could not save: browser storage is blocked.";
+            MenuStatusText = "Could not save: browser storage is blocked.";
         }
     }
- 
+
     // Put a loaded save back into the game
     function ApplySave()
     {
         let x = Number.isFinite(Save.x) ? Math.min(Math.max(Save.x, 0), 1) : 0;
- 
-        PlayerX = x * game.clientWidth;
+
+        PlayerX = x * W;
         PlayerY = OriginalY;            // always put him back on the ground
- 
+
         // Reset anything momentary
         PlayerJump = false;
         JumpsUsed = 0;
         CrouchTimer = 0;
         JumpRequested = false;
         Spinning = false;
- 
+
         ChangeRoom(Save.room);
     }
- 
+
     function LoadGame()
     {
         let text = null;
         try { text = localStorage.getItem(SaveKey); } catch (e) {}
- 
+
         if (text === null)
         {
-            MenuStatus.textContent = "No saved game found.";
+            MenuStatusText = "No saved game found.";
             return;
         }
- 
+
         try
         {
             Object.assign(Save, JSON.parse(text));
         }
         catch (e)
         {
-            MenuStatus.textContent = "The save is damaged.";
+            MenuStatusText = "The save is damaged.";
             return;
         }
- 
+
         ApplySave();
         CloseMenu();
     }
- 
-    // blur() takes the focus off the button, so pressing space later can't "click" it again
-    BtnResume.addEventListener("click", function() { CloseMenu(); this.blur(); });
-    BtnSave.addEventListener("click",   function() { SaveGame();  this.blur(); });
-    BtnLoad.addEventListener("click",   function() { LoadGame();  this.blur(); });
- 
+
+    // ---------- Menu (drawn on the canvas) ----------
+    const MenuItems = ["Resume", "Save game", "Load game"];
+    const MenuW = 340;
+    const MenuPad = 32;
+    const MenuBtnH = 44;
+    const MenuGap = 10;
+    const MenuTitleH = 40;
+
+    let Paused = false;
+    let MenuSelected = 0;                 // which button is highlighted
+    let MenuStatusText = "";
+    let MenuHasSave = false;
+
+    function MenuEnabled(index)
+    {
+        return (index === 2) ? MenuHasSave : true;     // "Load game" needs a save
+    }
+
+    function OpenMenu()
+    {
+        Paused = true;
+        MenuStatusText = "";
+        MenuHasSave = HasSave();
+        MenuSelected = 0;
+    }
+
+    function CloseMenu()
+    {
+        Paused = false;
+        JumpRequested = false;          // a space press made while paused must not cause a jump
+        canvas.style.cursor = "default";
+    }
+
+    // Where the box and the buttons are, in game coordinates
+    function MenuLayout()
+    {
+        let boxH = MenuPad * 2 + MenuTitleH + MenuItems.length * (MenuBtnH + MenuGap) + 24;
+        let x = (W - MenuW) / 2;
+        let y = (H - boxH) / 2;
+
+        let buttons = [];
+        for (let i = 0; i < MenuItems.length; i++)
+        {
+            buttons.push({ x: x + MenuPad, y: y + MenuPad + MenuTitleH + i * (MenuBtnH + MenuGap), w: MenuW - MenuPad * 2, h: MenuBtnH });
+        }
+        return { x: x, y: y, w: MenuW, h: boxH, buttons: buttons };
+    }
+
+    // Which button is under the point, or -1
+    function MenuItemAt(p)
+    {
+        let buttons = MenuLayout().buttons;
+        for (let i = 0; i < buttons.length; i++)
+        {
+            let b = buttons[i];
+            if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) return i;
+        }
+        return -1;
+    }
+
+    function MenuActivate(index)
+    {
+        if (index === 0) CloseMenu();
+        else if (index === 1) SaveGame();
+        else if (index === 2) LoadGame();
+    }
+
+    // Moves the highlight up or down, skipping buttons that are greyed out
+    function MenuMove(step)
+    {
+        let i = MenuSelected;
+        for (let n = 0; n < MenuItems.length; n++)
+        {
+            i = (i + step + MenuItems.length) % MenuItems.length;
+            if (MenuEnabled(i)) { MenuSelected = i; return; }
+        }
+    }
+
+    function MenuKey(event)
+    {
+        if (event.key === "ArrowDown") MenuMove(1);
+        else if (event.key === "ArrowUp") MenuMove(-1);
+        else if ((event.key === "Enter" || event.key === " ") && !event.repeat) MenuActivate(MenuSelected);
+    }
+
+    canvas.addEventListener("mousemove", function(event) {
+        if (!Paused) return;
+        let i = MenuItemAt(CanvasPoint(event));
+        let usable = (i >= 0 && MenuEnabled(i));
+        if (usable) MenuSelected = i;
+        canvas.style.cursor = usable ? "pointer" : "default";
+    });
+
+    canvas.addEventListener("click", function(event) {
+        if (!Paused) return;
+        let i = MenuItemAt(CanvasPoint(event));
+        if (i >= 0 && MenuEnabled(i)) MenuActivate(i);
+    });
+
+    // ---------- Drawing ----------
+    function RoundRectPath(x, y, w, h, r)
+    {
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
+        else ctx.rect(x, y, w, h);
+    }
+
+    function DrawPlayer()
+    {
+        if (!SheetImg.complete || SheetImg.naturalWidth === 0) return;     // sheet not loaded yet
+
+        let col = CurrentFrame % SheetCols;
+        let row = Math.floor(CurrentFrame / SheetCols);
+
+        ctx.save();
+        if (LeftPlayer)
+        {
+            ctx.translate(Math.round(PlayerX) + PlayerW, Math.round(PlayerY));
+            ctx.scale(-1, 1);                    // mirror to face left
+        }
+        else
+        {
+            ctx.translate(Math.round(PlayerX), Math.round(PlayerY));
+        }
+        ctx.drawImage(SheetImg, col * FrameW, row * FrameH, FrameW, FrameH, 0, 0, PlayerW, PlayerH);
+        ctx.restore();
+    }
+
+    function DrawText()
+    {
+        ctx.font = "14px monospace";
+        ctx.textBaseline = "alphabetic";
+
+        if (ShowDebug)
+        {
+            ctx.fillStyle = "white";
+            ctx.textAlign = "left";
+            ctx.fillText("frame " + CurrentFrame + "  (" + StateName + ")  room: " + CurrentRoom.name, 8, 22);
+        }
+
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = "white";
+        ctx.textAlign = "right";
+        ctx.fillText("Esc = menu", W - 8, 22);
+        ctx.globalAlpha = 1;
+    }
+
+    function DrawMenu()
+    {
+        let L = MenuLayout();
+
+        // Dim the game behind the menu
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(0, 0, W, H);
+
+        // Box
+        RoundRectPath(L.x, L.y, L.w, L.h, 8);
+        ctx.fillStyle = "#1d1d2b";
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#c9a15b";
+        ctx.stroke();
+
+        // Title
+        ctx.fillStyle = "white";
+        ctx.font = "bold 24px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Menu", L.x + L.w / 2, L.y + MenuPad + MenuTitleH / 2 - 6);
+
+        // Buttons
+        ctx.font = "16px monospace";
+        for (let i = 0; i < MenuItems.length; i++)
+        {
+            let b = L.buttons[i];
+            let enabled = MenuEnabled(i);
+
+            ctx.globalAlpha = enabled ? 1 : 0.4;
+            RoundRectPath(b.x, b.y, b.w, b.h, 4);
+            ctx.fillStyle = (i === MenuSelected && enabled) ? "#4a4a6e" : "#34344d";
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "#c9a15b";
+            ctx.stroke();
+
+            ctx.fillStyle = "white";
+            ctx.fillText(MenuItems[i], b.x + b.w / 2, b.y + b.h / 2);
+            ctx.globalAlpha = 1;
+        }
+
+        // Status line under the buttons
+        let last = L.buttons[L.buttons.length - 1];
+        ctx.font = "14px monospace";
+        ctx.fillStyle = "#c9a15b";
+        ctx.fillText(MenuStatusText, L.x + L.w / 2, last.y + MenuBtnH + MenuGap + 14);
+    }
+
+    // Everything that is drawn goes through here, back to front.
+    // Later things (terrain, enemies, NPCs, dialogue boxes) get their own Draw function called in this list.
+    function Draw()
+    {
+        ctx.fillStyle = BackgroundFill;
+        ctx.fillRect(0, 0, W, H);
+
+        // terrain, enemies and NPCs will go here
+
+        DrawPlayer();
+        DrawText();
+
+        if (Paused) DrawMenu();
+    }
+
+    // ---------- Main loop ----------
+    function GameLoop()
+    {
+        if (!Paused) MovePlayer();      // the game freezes while the menu is open
+        Draw();
+        requestAnimationFrame(GameLoop);
+    }
+
     // If a save exists, start with the menu open so it can be loaded
     if (HasSave())
     {
         OpenMenu();
-        MenuStatus.textContent = "Saved game found. Press Load to continue.";
+        MenuSelected = 2;               // highlight "Load game"
+        MenuStatusText = "Saved game found. Press Load to continue.";
     }
- 
-    ChangeRoom("start");
-    MovePlayer();
 
+    ChangeRoom("start");
+    GameLoop();
 </script>
 
 </body>
