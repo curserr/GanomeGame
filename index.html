@@ -8,17 +8,13 @@
     body {
         margin: 0;
         overflow: hidden;
-        background-color: #111;           /* the bars around the game when the window isn't 16:9 */
-        width: 100vw;
-        height: 100vh;
+        background-color: black;
     }
 
-    /* The game screen: a fixed W x H box (set in the script) that is scaled to fit the window.
-       The canvas (the game world) and the interface layer both live inside it, so they scale together. */
+    /* The game fills the whole window. The canvas (game world) and the interface layer sit on top of each other. */
     #screen {
-        position: absolute;
-        left: 50%;
-        top: 50%;
+        position: fixed;
+        inset: 0;
     }
 
     canvas {
@@ -120,30 +116,31 @@
     // Only the game world is drawn on the canvas: backgrounds, terrain, the player, enemies, NPCs.
     // Anything that is interface (menus, dialogue, health bars, text) is HTML and CSS in the #ui layer.
     //
-    // The game has a fixed internal size of W x H. Every position, size and speed below is in these units.
-    // The whole screen (canvas + interface) is then scaled to fit the window, so every room looks the same
-    // on every screen.
-    const W = 1280;
-    const H = 720;
+    // The canvas always fills the whole window. W and H are its size in pixels and are updated on resize.
+    let W = window.innerWidth;
+    let H = window.innerHeight;
 
-    let screenEl = document.getElementById("screen");
     let canvas = document.getElementById("game");
-    canvas.width = W;
-    canvas.height = H;
-    screenEl.style.width = W + "px";
-    screenEl.style.height = H + "px";
-
     let ctx = canvas.getContext("2d");
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
 
-    function FitScreen()
+    // Sizes the canvas to the window. On sharp (high-DPI) screens the canvas gets more real pixels,
+    // so the picture stays crisp, but everything is still measured in normal window pixels (W x H).
+    function SizeCanvas()
     {
-        let scale = Math.min(window.innerWidth / W, window.innerHeight / H);
-        screenEl.style.transform = "translate(-50%, -50%) scale(" + scale + ")";
+        W = window.innerWidth;
+        H = window.innerHeight;
+
+        let dpr = window.devicePixelRatio || 1;
+        canvas.width  = Math.round(W * dpr);
+        canvas.height = Math.round(H * dpr);
+        canvas.style.width  = W + "px";
+        canvas.style.height = H + "px";
+
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
     }
-    window.addEventListener("resize", FitScreen);
-    FitScreen();
+    SizeCanvas();
 
     // ---------- Sprite sheet ----------
     const SheetCols = 5;
@@ -154,8 +151,8 @@
     let SheetImg = new Image();
     SheetImg.src = "gnome_sheet_v2.png";
 
-    const PlayerW = 64;                       // size of the player on screen, in game units
-    const PlayerH = PlayerW * FrameH / FrameW;
+    let PlayerW = W * 0.05;                   // the player is 5% of the window width wide
+    let PlayerH = PlayerW * FrameH / FrameW;  // the height follows the shape of one frame
 
     // Frame numbers count left to right, top to bottom (0 to 14)
     //   row 1: 0  1  2  3  4
@@ -248,7 +245,7 @@
     // ---------- Player state ----------
     let PlayerX = 0;
     let PlayerY = H / 2;
-    const OriginalY = PlayerY;
+    let OriginalY = PlayerY;                 // the ground level
     let StartY = PlayerY;        // where the current jump began
 
     let speed = 4;
@@ -454,6 +451,27 @@
         if (side === "left")  PlayerX = 0;
         if (side === "right") PlayerX = W - PlayerW;
     }
+
+    // When the window changes size, resize the canvas and move everything so it keeps its place on screen
+    window.addEventListener("resize", function() {
+        let oldW = W, oldH = H;
+        SizeCanvas();
+
+        let sx = W / oldW;
+        let sy = H / oldH;
+
+        PlayerX    *= sx;
+        PlayerY    *= sy;
+        StartY     *= sy;
+        FallStartY *= sy;
+
+        OriginalY  = H / 2;
+        JumpHeight = H / 6;
+        PlayerW    = W * 0.05;
+        PlayerH    = PlayerW * FrameH / FrameW;
+
+        BackgroundFill = MakeBackground(CurrentRoom.background);     // the gradient depends on the height
+    });
 
     // ---------- Save data ----------
     // Everything that counts as progress lives in this one object.
