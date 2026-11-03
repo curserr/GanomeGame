@@ -244,7 +244,7 @@
 
     // ---------- Player state ----------
     let PlayerX = 0;
-    let PlayerY = WindowHeight / 1.4;
+    let PlayerY = WindowHeight / 6;
     let OriginalY = PlayerY;                 // the ground level
     let StartY = PlayerY;        // where the current jump began
 
@@ -346,7 +346,7 @@
         if (PlayerY > OriginalY) PlayerY = OriginalY;
 
         // Walking off the edge of the screen goes to the neighbouring room
-        let maxX = WindowHeight - PlayerWidth;
+        let maxX = WindowWidth - PlayerWidth;
         if (PlayerX > maxX && CurrentRoom.exits.right) ChangeRoom(CurrentRoom.exits.right, "left");
         else if (PlayerX < 0 && CurrentRoom.exits.left) ChangeRoom(CurrentRoom.exits.left, "right");
 
