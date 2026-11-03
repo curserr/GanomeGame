@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<title>My First Game</title>
+<title>The Story of Humzhnation</title>
 
 <style>
     body {
@@ -23,7 +23,7 @@
         position: absolute;
         left: 100px;
         top: 100px;
-        width: 4vw;
+        width: 5vw;
         aspect-ratio: 224 / 304;               /* one frame: 224 x 304 px */
         background-image: url("gnome_sheet_v2.png");
         background-size: 500% 300%;            /* sheet is 5 columns x 3 rows */
@@ -42,6 +42,59 @@
         font: 14px monospace;
         pointer-events: none;
     }
+
+	    /* Pause / save menu */
+    #Menu {
+        position: absolute;
+        inset: 0;
+        display: none;                          /* shown with Esc */
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 10;
+    }
+    #MenuBox{
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 240px;
+        padding: 24px 32px;
+        background: #1d1d2b;
+        border: 3px solid #c9a15b;
+        border-radius: 8px;
+        color: white;
+        font-family: monospace;
+        text-align: center;
+    }
+ 
+    #MenuBox h2 { margin: 0 0 8px; }
+ 
+    #MenuBox button {
+        padding: 10px;
+        font: 16px monospace;
+        color: white;
+        background: #34344d;
+        border: 2px solid #c9a15b;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+ 
+    #MenuBox button:hover:not(:disabled) { background: #4a4a6e; }
+    #MenuBox button:disabled { opacity: 0.4; cursor: default; }
+ 
+    #MenuStatus { min-height: 1.2em; margin: 4px 0 0; font-size: 14px; color: #c9a15b; }
+ 
+    #Hint {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        color: white;
+        opacity: 0.6;
+        font: 14px monospace;
+        pointer-events: none;
+    }
+
+
 </style>
 </head>
 
@@ -51,6 +104,15 @@
     <div id="Player"></div>
     <div id="Debug"></div>
     <audio id="bgMusic1" src="AmbientBackground1.mp3" loop></audio>
+    <div id="Hint">Esc = menu</div>
+    <div id="Menu">
+        <div id="MenuBox">
+            <h2>Menu</h2>
+            <button id="BtnResume">Resume</button>
+            <button id="BtnSave">Save game</button>
+            <button id="BtnLoad">Load game</button>
+            <p id="MenuStatus"></p>
+        </div>
 </div>
 
 <script>
@@ -83,6 +145,7 @@
     let AnimIndex = 0;
     let CrouchTimer = 0;          // counts down while crouching
     let FallStartY = 0;           // where the fall began (the top of the jump)
+    let LandingY;
     let Spinning = false;         // true once the fall has reached the looping spin
     let StateName = "idle";       // only used by the debug text
 
@@ -182,6 +245,8 @@
     document.addEventListener("keydown", function(event) {
         keys[event.key.toLowerCase()] = true;
 
+	if (event.key === "Escape") { if (Paused) CloseMenu(); else OpenMenu(); }
+
         if (event.key.toLowerCase() === "d") DebugBox.style.display = (DebugBox.style.display === "none") ? "block" : "none";
 
         // A fresh press (not key repeat) asks for one jump
@@ -207,6 +272,11 @@
 
     function MovePlayer()
     {
+	if (Paused)
+    	{
+        requestAnimationFrame(MovePlayer);
+        return;
+    	}
         // Ground check
         PlayerOnGround = (PlayerY >= OriginalY);
         if (PlayerOnGround && !PlayerJump) JumpsUsed = 0;
@@ -292,6 +362,121 @@
         PlayerY += FallSpeed;
     }
 
+	    // ---------- Save data and menu ----------
+    // Everything that counts as progress lives in this one object.
+    // Add new things here (items, defeated bosses, switches) and they are saved automatically.
+    const SaveKey = "gnomeGameSave";
+ 
+    let Save = {
+        version: 1,
+        room: "start",         // later: the room the player is in
+        x: 0,                  // horizontal position as a fraction of the screen width (0 to 1)
+        health: 3,
+        bossesDefeated: [],    // e.g. ["boss1"]
+        flags: {}              // e.g. { doorOpened: true }
+    };
+ 
+    let Paused = false;
+ 
+    let Menu       = document.getElementById("Menu");
+    let MenuStatus = document.getElementById("MenuStatus");
+    let BtnResume  = document.getElementById("BtnResume");
+    let BtnSave    = document.getElementById("BtnSave");
+    let BtnLoad    = document.getElementById("BtnLoad");
+ 
+    function HasSave()
+    {
+        try { return localStorage.getItem(SaveKey) !== null; }
+        catch (e) { return false; }     // storage can be blocked (private windows, strict settings)
+    }
+ 
+    function OpenMenu()
+    {
+        Paused = true;
+        MenuStatus.textContent = "";
+        BtnLoad.disabled = !HasSave();
+        Menu.style.display = "flex";
+    }
+ 
+    function CloseMenu()
+    {
+        Paused = false;
+        JumpRequested = false;          // a space press made while paused must not cause a jump
+        Menu.style.display = "none";
+    }
+ 
+    // Copy the current game into the save object, then store it in the browser
+    function SaveGame()
+    {
+        Save.x = PlayerX / game.clientWidth;
+ 
+        try
+        {
+            localStorage.setItem(SaveKey, JSON.stringify(Save));
+            MenuStatus.textContent = "Game saved.";
+            BtnLoad.disabled = false;
+        }
+        catch (e)
+        {
+            MenuStatus.textContent = "Could not save: browser storage is blocked.";
+        }
+    }
+ 
+    // Put a loaded save back into the game
+    function ApplySave()
+    {
+        let x = Number.isFinite(Save.x) ? Math.min(Math.max(Save.x, 0), 1) : 0;
+ 
+        PlayerX = x * game.clientWidth;
+        PlayerY = OriginalY;            // always put him back on the ground
+ 
+        // Reset anything momentary
+        PlayerJump = false;
+        JumpsUsed = 0;
+        CrouchTimer = 0;
+        JumpRequested = false;
+        Spinning = false;
+ 
+        // Later, when rooms exist: ChangeRoom(Save.room);
+    }
+ 
+    function LoadGame()
+    {
+        let text = null;
+        try { text = localStorage.getItem(SaveKey); } catch (e) {}
+ 
+        if (text === null)
+        {
+            MenuStatus.textContent = "No saved game found.";
+            return;
+        }
+ 
+        try
+        {
+            Object.assign(Save, JSON.parse(text));
+        }
+        catch (e)
+        {
+            MenuStatus.textContent = "The save is damaged.";
+            return;
+        }
+ 
+        ApplySave();
+        CloseMenu();
+    }
+ 
+    // blur() takes the focus off the button, so pressing space later can't "click" it again
+    BtnResume.addEventListener("click", function() { CloseMenu(); this.blur(); });
+    BtnSave.addEventListener("click",   function() { SaveGame();  this.blur(); });
+    BtnLoad.addEventListener("click",   function() { LoadGame();  this.blur(); });
+ 
+    // If a save exists, start with the menu open so it can be loaded
+    if (HasSave())
+    {
+        OpenMenu();
+        MenuStatus.textContent = "Saved game found. Press Load to continue.";
+    }
+ 
     MovePlayer();
 
     // ---------- Background music ----------
