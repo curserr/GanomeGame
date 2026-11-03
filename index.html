@@ -132,8 +132,8 @@
             if (fallen < JumpHeight * TumbleDistance)
             {
                 StateName = "falling";
-                Spinning = false;
-                return FallPose;
+                let index = Math.floor(progress / SpinStart * FallFrames.length);
+                return FallFrames[Math.min(index, FallFrames.length - 1)];
             }
 
             // Long fall (reached near the bottom of a double jump): tumble until landing
