@@ -404,15 +404,15 @@
     const Rooms = {
         start: {
             name: "Start",
-            background: ["#000000"],
+            background: lightgreen,
             music: "AmbientBackground1.mp3",
             exits: { right: "room2" }
         },
         room2: {
             name: "Room 2",
-            background: ["#1b1030", "#3a1d5c"],
+            background: black,
             music: "DarkPartsMusic.mp3",      // change this file name to give the room its own music
-            exits: { left: "start" }
+            exits: { left: "start", right: "room3"}
         }
     };
 
