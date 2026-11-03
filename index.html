@@ -402,19 +402,27 @@
     // "background" is one colour, or two colours (top, bottom) for a gradient.
     // To add a room: add an entry here and point an exit of a neighbouring room at it.
     const Rooms = {
-        start: {
-            name: "Start",
-            background: lightgreen,
-            music: "AmbientBackground1.mp3",
-            exits: { right: "room2" }
-        },
-        room2: {
-            name: "Room 2",
-            background: black,
-            music: "DarkPartsMusic.mp3",      // change this file name to give the room its own music
-            exits: { left: "start", right: "room3"}
-        }
-    };
+    start: {
+        name: "Start",
+        background: lightgreen,
+        music: "AmbientBackground1.mp3",
+        exits: { right: "room2" }
+    },
+
+    room2: {
+        name: "Room 2",
+        background: black,
+        music: "DarkPartsMusic.mp3",
+        exits: { left: "start", right: "room3" }
+    },
+
+    room3: {
+        name: "Room 3",
+        background: black,
+        music: "DarkPartsMusic.mp3",
+        exits: { left: "room2" }
+    }
+      };
 
     let CurrentRoomName = "start";
     let CurrentRoom = Rooms.start;
