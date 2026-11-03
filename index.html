@@ -15,7 +15,7 @@
         width: 100vw;
         height: 100vh;
         position: relative;
-        background-color: black;
+        background-color: lightgreen;
     }
 
     /* The player is one div that shows one frame of the sprite sheet at a time */
@@ -393,13 +393,13 @@
     const Rooms = {
         start: {
             name: "Start",
-            background: "black",
+            background: "lightgreen",
             music: "AmbientBackground1.mp3",
             exits: { right: "room2" }
         },
         room2: {
             name: "Room 2",
-            background: "linear-gradient(#1b1030, #3a1d5c)",
+            background: "black",
             music: "DarkPartsMusic.mp3",      // change this file name to give the room its own music
             exits: { left: "start" }
         }
