@@ -382,7 +382,7 @@
     // ---------- Background music ----------
     // Browsers only allow sound after the first key press or click
     let bgMusic = document.getElementById("bgMusic1");
-    bgMusic.volume = 0.4;   // 0 to 1
+    bgMusic.volume = 0.4;   // default volume
 
     let MusicOn = false;    // becomes true after the first key press or click
 
@@ -412,6 +412,7 @@
     room2: {
         name: "Room 2",
         background: "black",
+        volume: 0.7,
         music: "DarkPartsMusic.mp3",
         exits: { left: "start", right: "room3" }
     },
@@ -419,6 +420,7 @@
     room3: {
         name: "Room 3",
         background: "black",
+        volume: 0.7,
         music: "DarkPartsMusic.mp3",
         exits: { left: "room2" }
     }
@@ -447,6 +449,7 @@
 
         CurrentRoomName = roomName;
         CurrentRoom = Rooms[roomName];
+        bgMusic.volume = CurrentRoom.volume ?? 0.4;
         Save.room = roomName;                     // so the room is part of the save
 
         BackgroundFill = MakeBackground(CurrentRoom.background);
@@ -459,12 +462,12 @@
         }
 
         if (side === "left")  PlayerX = 0;
-        if (side === "right") PlayerX = W - PlayerW;
+        if (side === "right") PlayerX = WindowWidth - PlayerWidth;
     }
 
     // When the window changes size, resize the canvas and move everything so it keeps its place on screen
     window.addEventListener("resize", function() {
-        let oldW = W, oldH = H;
+        let oldW = WindowWidth, oldH = WindowHeight;
         SizeCanvas();
 
         let sx = WindowHeight / oldW;
@@ -478,7 +481,7 @@
         OriginalY  = WindowHeight / 2;
         JumpHeight = WindowHeight / 6;
         PlayerWidth    = WindowWidth * 0.05;
-        PlayerHeight    = PlayerW * FrameH / FrameW;
+        PlayerHeight    = PlayerWidth * FrameH / FrameW;
 
         BackgroundFill = MakeBackground(CurrentRoom.background);     // the gradient depends on the height
     });
