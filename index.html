@@ -11,51 +11,139 @@
         background-color: #111;           /* the bars around the game when the window isn't 16:9 */
         width: 100vw;
         height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
 
-    /* The whole game is drawn on this one canvas. Its size on screen is set by FitCanvas() in the script. */
+    /* The game screen: a fixed W x H box (set in the script) that is scaled to fit the window.
+       The canvas (the game world) and the interface layer both live inside it, so they scale together. */
+    #screen {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+    }
+
     canvas {
         display: block;
         background: black;
     }
+
+    /* Everything that is interface (text, menus, dialogue, bars) is plain HTML and CSS in this layer */
+    #ui {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;             /* clicks go through, except on things that turn it back on */
+        font-family: monospace;
+        color: white;
+    }
+
+    #Debug {
+        position: absolute;
+        left: 8px;
+        top: 8px;
+        font-size: 14px;
+    }
+
+    #Hint {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        font-size: 14px;
+        opacity: 0.6;
+    }
+
+    /* Pause / save menu */
+    #Menu {
+        position: absolute;
+        inset: 0;
+        display: none;                    /* shown with Esc */
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.7);
+        pointer-events: auto;
+    }
+
+    #MenuBox {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 240px;
+        padding: 24px 32px;
+        background: #1d1d2b;
+        border: 3px solid #c9a15b;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    #MenuBox h2 { margin: 0 0 8px; }
+
+    #MenuBox button {
+        padding: 10px;
+        font: 16px monospace;
+        color: white;
+        background: #34344d;
+        border: 2px solid #c9a15b;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    #MenuBox button.selected { background: #4a4a6e; }
+    #MenuBox button:disabled { opacity: 0.4; cursor: default; }
+
+    #MenuStatus { min-height: 1.2em; margin: 4px 0 0; font-size: 14px; color: #c9a15b; }
 </style>
 </head>
 
 <body>
 
-<canvas id="game" width="1280" height="720"></canvas>
+<div id="screen">
+    <canvas id="game"></canvas>
+
+    <div id="ui">
+        <div id="Debug"></div>
+        <div id="Hint">Esc = menu</div>
+
+        <div id="Menu">
+            <div id="MenuBox">
+                <h2>Menu</h2>
+                <button id="BtnResume">Resume</button>
+                <button id="BtnSave">Save game</button>
+                <button id="BtnLoad">Load game</button>
+                <p id="MenuStatus"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <audio id="bgMusic1" src="AmbientBackground1.mp3" loop></audio>
 
 <script>
     // ---------- Canvas ----------
+    // Only the game world is drawn on the canvas: backgrounds, terrain, the player, enemies, NPCs.
+    // Anything that is interface (menus, dialogue, health bars, text) is HTML and CSS in the #ui layer.
+    //
     // The game has a fixed internal size of W x H. Every position, size and speed below is in these units.
-    // The canvas is then scaled to fit the window, so every room looks the same on every screen.
+    // The whole screen (canvas + interface) is then scaled to fit the window, so every room looks the same
+    // on every screen.
     const W = 1280;
     const H = 720;
 
+    let screenEl = document.getElementById("screen");
     let canvas = document.getElementById("game");
+    canvas.width = W;
+    canvas.height = H;
+    screenEl.style.width = W + "px";
+    screenEl.style.height = H + "px";
+
     let ctx = canvas.getContext("2d");
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
 
-    function FitCanvas()
+    function FitScreen()
     {
         let scale = Math.min(window.innerWidth / W, window.innerHeight / H);
-        canvas.style.width  = Math.floor(W * scale) + "px";
-        canvas.style.height = Math.floor(H * scale) + "px";
+        screenEl.style.transform = "translate(-50%, -50%) scale(" + scale + ")";
     }
-    window.addEventListener("resize", FitCanvas);
-    FitCanvas();
-
-    // Converts a mouse event into game coordinates (0 to W, 0 to H), whatever the canvas is scaled to
-    function CanvasPoint(event)
-    {
-        let r = canvas.getBoundingClientRect();
-        return { x: (event.clientX - r.left) * W / r.width, y: (event.clientY - r.top) * H / r.height };
-    }
+    window.addEventListener("resize", FitScreen);
+    FitScreen();
 
     // ---------- Sprite sheet ----------
     const SheetCols = 5;
@@ -395,12 +483,13 @@
         try
         {
             localStorage.setItem(SaveKey, JSON.stringify(Save));
-            MenuStatusText = "Game saved.";
+            SetMenuStatus("Game saved.");
             MenuHasSave = true;
+            RefreshMenu();
         }
         catch (e)
         {
-            MenuStatusText = "Could not save: browser storage is blocked.";
+            SetMenuStatus("Could not save: browser storage is blocked.");
         }
     }
 
@@ -429,7 +518,7 @@
 
         if (text === null)
         {
-            MenuStatusText = "No saved game found.";
+            SetMenuStatus("No saved game found.");
             return;
         }
 
@@ -439,7 +528,7 @@
         }
         catch (e)
         {
-            MenuStatusText = "The save is damaged.";
+            SetMenuStatus("The save is damaged.");
             return;
         }
 
@@ -447,17 +536,16 @@
         CloseMenu();
     }
 
-    // ---------- Menu (drawn on the canvas) ----------
+    // ---------- Menu (HTML and CSS, in the #ui layer) ----------
     const MenuItems = ["Resume", "Save game", "Load game"];
-    const MenuW = 340;
-    const MenuPad = 32;
-    const MenuBtnH = 44;
-    const MenuGap = 10;
-    const MenuTitleH = 40;
+
+    let DebugBox    = document.getElementById("Debug");
+    let Menu        = document.getElementById("Menu");
+    let MenuStatus  = document.getElementById("MenuStatus");
+    let MenuButtons = [document.getElementById("BtnResume"), document.getElementById("BtnSave"), document.getElementById("BtnLoad")];
 
     let Paused = false;
     let MenuSelected = 0;                 // which button is highlighted
-    let MenuStatusText = "";
     let MenuHasSave = false;
 
     function MenuEnabled(index)
@@ -465,46 +553,36 @@
         return (index === 2) ? MenuHasSave : true;     // "Load game" needs a save
     }
 
+    function SetMenuStatus(text)
+    {
+        MenuStatus.textContent = text;
+    }
+
+    // Greys out buttons that can't be used and highlights the selected one
+    function RefreshMenu()
+    {
+        for (let i = 0; i < MenuButtons.length; i++)
+        {
+            MenuButtons[i].disabled = !MenuEnabled(i);
+            MenuButtons[i].classList.toggle("selected", i === MenuSelected && MenuEnabled(i));
+        }
+    }
+
     function OpenMenu()
     {
         Paused = true;
-        MenuStatusText = "";
+        SetMenuStatus("");
         MenuHasSave = HasSave();
         MenuSelected = 0;
+        Menu.style.display = "flex";
+        RefreshMenu();
     }
 
     function CloseMenu()
     {
         Paused = false;
         JumpRequested = false;          // a space press made while paused must not cause a jump
-        canvas.style.cursor = "default";
-    }
-
-    // Where the box and the buttons are, in game coordinates
-    function MenuLayout()
-    {
-        let boxH = MenuPad * 2 + MenuTitleH + MenuItems.length * (MenuBtnH + MenuGap) + 24;
-        let x = (W - MenuW) / 2;
-        let y = (H - boxH) / 2;
-
-        let buttons = [];
-        for (let i = 0; i < MenuItems.length; i++)
-        {
-            buttons.push({ x: x + MenuPad, y: y + MenuPad + MenuTitleH + i * (MenuBtnH + MenuGap), w: MenuW - MenuPad * 2, h: MenuBtnH });
-        }
-        return { x: x, y: y, w: MenuW, h: boxH, buttons: buttons };
-    }
-
-    // Which button is under the point, or -1
-    function MenuItemAt(p)
-    {
-        let buttons = MenuLayout().buttons;
-        for (let i = 0; i < buttons.length; i++)
-        {
-            let b = buttons[i];
-            if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) return i;
-        }
-        return -1;
+        Menu.style.display = "none";
     }
 
     function MenuActivate(index)
@@ -521,8 +599,9 @@
         for (let n = 0; n < MenuItems.length; n++)
         {
             i = (i + step + MenuItems.length) % MenuItems.length;
-            if (MenuEnabled(i)) { MenuSelected = i; return; }
+            if (MenuEnabled(i)) { MenuSelected = i; break; }
         }
+        RefreshMenu();
     }
 
     function MenuKey(event)
@@ -532,28 +611,15 @@
         else if ((event.key === "Enter" || event.key === " ") && !event.repeat) MenuActivate(MenuSelected);
     }
 
-    canvas.addEventListener("mousemove", function(event) {
-        if (!Paused) return;
-        let i = MenuItemAt(CanvasPoint(event));
-        let usable = (i >= 0 && MenuEnabled(i));
-        if (usable) MenuSelected = i;
-        canvas.style.cursor = usable ? "pointer" : "default";
+    // blur() takes the focus off the button, so pressing space later can't "click" it again
+    MenuButtons.forEach(function(button, index) {
+        button.addEventListener("click", function() { MenuActivate(index); this.blur(); });
+        button.addEventListener("mouseenter", function() {
+            if (MenuEnabled(index)) { MenuSelected = index; RefreshMenu(); }
+        });
     });
 
-    canvas.addEventListener("click", function(event) {
-        if (!Paused) return;
-        let i = MenuItemAt(CanvasPoint(event));
-        if (i >= 0 && MenuEnabled(i)) MenuActivate(i);
-    });
-
-    // ---------- Drawing ----------
-    function RoundRectPath(x, y, w, h, r)
-    {
-        ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
-        else ctx.rect(x, y, w, h);
-    }
-
+    // ---------- Drawing the game world (canvas) ----------
     function DrawPlayer()
     {
         if (!SheetImg.complete || SheetImg.naturalWidth === 0) return;     // sheet not loaded yet
@@ -575,77 +641,8 @@
         ctx.restore();
     }
 
-    function DrawText()
-    {
-        ctx.font = "14px monospace";
-        ctx.textBaseline = "alphabetic";
-
-        if (ShowDebug)
-        {
-            ctx.fillStyle = "white";
-            ctx.textAlign = "left";
-            ctx.fillText("frame " + CurrentFrame + "  (" + StateName + ")  room: " + CurrentRoom.name, 8, 22);
-        }
-
-        ctx.globalAlpha = 0.6;
-        ctx.fillStyle = "white";
-        ctx.textAlign = "right";
-        ctx.fillText("Esc = menu", W - 8, 22);
-        ctx.globalAlpha = 1;
-    }
-
-    function DrawMenu()
-    {
-        let L = MenuLayout();
-
-        // Dim the game behind the menu
-        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-        ctx.fillRect(0, 0, W, H);
-
-        // Box
-        RoundRectPath(L.x, L.y, L.w, L.h, 8);
-        ctx.fillStyle = "#1d1d2b";
-        ctx.fill();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "#c9a15b";
-        ctx.stroke();
-
-        // Title
-        ctx.fillStyle = "white";
-        ctx.font = "bold 24px monospace";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("Menu", L.x + L.w / 2, L.y + MenuPad + MenuTitleH / 2 - 6);
-
-        // Buttons
-        ctx.font = "16px monospace";
-        for (let i = 0; i < MenuItems.length; i++)
-        {
-            let b = L.buttons[i];
-            let enabled = MenuEnabled(i);
-
-            ctx.globalAlpha = enabled ? 1 : 0.4;
-            RoundRectPath(b.x, b.y, b.w, b.h, 4);
-            ctx.fillStyle = (i === MenuSelected && enabled) ? "#4a4a6e" : "#34344d";
-            ctx.fill();
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = "#c9a15b";
-            ctx.stroke();
-
-            ctx.fillStyle = "white";
-            ctx.fillText(MenuItems[i], b.x + b.w / 2, b.y + b.h / 2);
-            ctx.globalAlpha = 1;
-        }
-
-        // Status line under the buttons
-        let last = L.buttons[L.buttons.length - 1];
-        ctx.font = "14px monospace";
-        ctx.fillStyle = "#c9a15b";
-        ctx.fillText(MenuStatusText, L.x + L.w / 2, last.y + MenuBtnH + MenuGap + 14);
-    }
-
-    // Everything that is drawn goes through here, back to front.
-    // Later things (terrain, enemies, NPCs, dialogue boxes) get their own Draw function called in this list.
+    // Everything in the game world is drawn through here, back to front.
+    // Later things (terrain, enemies, NPCs) get their own Draw function called in this list.
     function Draw()
     {
         ctx.fillStyle = BackgroundFill;
@@ -654,9 +651,13 @@
         // terrain, enemies and NPCs will go here
 
         DrawPlayer();
-        DrawText();
+    }
 
-        if (Paused) DrawMenu();
+    // ---------- Updating the interface (HTML) ----------
+    function UpdateUI()
+    {
+        DebugBox.style.display = ShowDebug ? "block" : "none";
+        if (ShowDebug) DebugBox.textContent = "frame " + CurrentFrame + "  (" + StateName + ")  room: " + CurrentRoom.name;
     }
 
     // ---------- Main loop ----------
@@ -664,6 +665,7 @@
     {
         if (!Paused) MovePlayer();      // the game freezes while the menu is open
         Draw();
+        UpdateUI();
         requestAnimationFrame(GameLoop);
     }
 
@@ -672,7 +674,8 @@
     {
         OpenMenu();
         MenuSelected = 2;               // highlight "Load game"
-        MenuStatusText = "Saved game found. Press Load to continue.";
+        RefreshMenu();
+        SetMenuStatus("Saved game found. Press Load to continue.");
     }
 
     ChangeRoom("start");
