@@ -132,6 +132,7 @@
             if (fallen < JumpHeight * TumbleDistance)
             {
                 StateName = "falling";
+                Spinning = false;
                 let index = Math.floor(progress / SpinStart * FallFrames.length);
                 return FallFrames[Math.min(index, FallFrames.length - 1)];
             }
