@@ -661,14 +661,14 @@
         ctx.save();
         if (LeftPlayer)
         {
-            ctx.translate(Math.round(PlayerX) + PlayerW, Math.round(PlayerY));
+            ctx.translate(Math.round(PlayerX) + PlayerWidth, Math.round(PlayerY));
             ctx.scale(-1, 1);                    // mirror to face left
         }
         else
         {
             ctx.translate(Math.round(PlayerX), Math.round(PlayerY));
         }
-        ctx.drawImage(SheetImg, col * FrameW, row * FrameH, FrameW, FrameH, 0, 0, PlayerW, PlayerH);
+        ctx.drawImage(SheetImg, col * FrameW, row * FrameH, FrameW, FrameH, 0, 0, PlayerWidth, PlayerHeight);
         ctx.restore();
     }
 
