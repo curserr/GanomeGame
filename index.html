@@ -436,7 +436,7 @@
 
         if (colors.length === 1) return colors[0];
 
-        let gradient = ctx.createLinearGradient(0, 0, 0, H);
+        let gradient = ctx.createLinearGradient(0, 0, 0, WindowHeight);
         gradient.addColorStop(0, colors[0]);
         gradient.addColorStop(1, colors[1]);
         return gradient;
@@ -478,7 +478,7 @@
         StartY     *= sy;
         FallStartY *= sy;
 
-        OriginalY  = WindowHeight / 2;
+        OriginalY  = WindowHeight / 1.2;
         JumpHeight = WindowHeight / 6;
         PlayerWidth    = WindowWidth * 0.05;
         PlayerHeight    = PlayerWidth * FrameH / FrameW;
