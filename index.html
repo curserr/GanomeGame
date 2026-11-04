@@ -194,15 +194,16 @@ button:hover {
 
     <div id="popup">
         <h2>KILL YOURSELF</h2>
-        <p>ON MY MAMMA KILL YOURSELF</p>
-        <p>Yo do u have aids why am i even doing this</p>
-    </div>
+      </div>
 
     <div id="birthdayScreen">
         <canvas id="fireworks"></canvas>
         <h1>HAPPY BIRTHDAY YARA!! 🎂</h1>
         <h2>YOU ARE THE FAVOURITE ❤️</h2>
         <h2>Hope you have the best day ever!! 💗</h2>
+	<h3>
+	<a href="https://ecardforest.com/card/?token=3.X2dqMVRCVnRVIn0.lTSOsah5vDnLivSAymPWBf-gLtNoo_9gSChpaXP_mY8"> Click here! 😁</a>
+	</h3>
     </div>
 
 </div>
@@ -210,7 +211,7 @@ button:hover {
 <!-- AUDIO FILES -->
 
 <audio id="backgroundAudio" loop>
-    <source src="HappyBirthdaySong.mp4" type="audio/mpeg">
+    <source src="Nothing.mp4" type="audio/mpeg">
 </audio>
 
 <audio id="noAudio">
@@ -218,7 +219,7 @@ button:hover {
 </audio>
 
 <audio id="birthdayAudio">
-    <source src="birthday.mp3" type="audio/mpeg">
+    <source src="HappyBirthdaySong.mp4" type="audio/mp4">
 </audio>
 
 <script>
@@ -296,6 +297,7 @@ createDecorations();
 // 3. NO BUTTON
 // ========================================
 
+
 const noButton = document.getElementById("noButton");
 const popup = document.getElementById("popup");
 
@@ -307,7 +309,7 @@ noButton.addEventListener("click", function() {
 
     noAttempts++;
 
-    // Play the alternative audio
+    // Play alternative audio
 
     backgroundAudio.pause();
 
@@ -315,37 +317,43 @@ noButton.addEventListener("click", function() {
     noAudio.play().catch(() => {});
 
     noAudio.onended = function() {
-        if (!document.getElementById("birthdayScreen").style.display ||
-            document.getElementById("birthdayScreen").style.display === "none") {
-            backgroundAudio.play().catch(() => {});
-        }
+        backgroundAudio.play().catch(() => {});
     };
 
-    // Move the NO button somewhere random
+    // Move the button relative to the screen
 
-    noButton.style.position = "absolute";
+    noButton.style.position = "fixed";
 
-    const maxX = Math.max(0, window.innerWidth - noButton.offsetWidth);
-    const maxY = Math.max(0, window.innerHeight - noButton.offsetHeight);
+    const padding = 20;
 
-    noButton.style.left = Math.random() * maxX + "px";
-    noButton.style.top = Math.random() * maxY + "px";
+    const maxX = window.innerWidth - noButton.offsetWidth - padding;
+    const maxY = window.innerHeight - noButton.offsetHeight - padding;
 
-    // Show a message in the middle
+    const randomX = padding + Math.random() * Math.max(0, maxX - padding);
+    const randomY = padding + Math.random() * Math.max(0, maxY - padding);
+
+    noButton.style.left = randomX + "px";
+    noButton.style.top = randomY + "px";
+
+    // Ensure it stays visible above everything
+
+    noButton.style.zIndex = "30";
+
+    // Show popup
 
     popup.style.display = "block";
 
-    // Different messages after repeated attempts
+setTimeout(function() {
+    popup.style.display = "none";
+}, 4000);
 
-    if (noAttempts >= 5) {
+    if (noAttempts >= 3) {
         popup.innerHTML = `
             <h2>YARA. STOP. 😭</h2>
-            <p>YOU KNOW THE ANSWER.</p>
-            <p>JUST PRESS YES ALREADY ❤️</p>
         `;
     }
-});
 
+})
 
 // ========================================
 // 4. YES BUTTON
@@ -381,6 +389,7 @@ yesButton.addEventListener("click", function() {
     // Start fireworks
 
     startFireworks();
+
 });
 
 
