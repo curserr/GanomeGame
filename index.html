@@ -467,24 +467,49 @@
 
     // When the window changes size, resize the canvas and move everything so it keeps its place on screen
     window.addEventListener("resize", function() {
-        let oldW = WindowWidth, oldH = WindowHeight;
-        SizeCanvas();
 
-        let sx = WindowHeight / oldW;
-        let sy = WindowHeight / oldH;
+    // Store the old dimensions and player position BEFORE resizing
+    let oldW = WindowWidth;
+    let oldH = WindowHeight;
+    let oldPlayerX = PlayerX;
 
-        PlayerX    *= sx;
-        PlayerY    *= sy;
-        StartY     *= sy;
-        FallStartY *= sy;
+    let wasOnGround = PlayerOnGround;
 
-        OriginalY  = WindowHeight / 1.2;
-        JumpHeight = WindowHeight / 6;
-        PlayerWidth    = WindowWidth * 0.05;
-        PlayerHeight    = PlayerWidth * FrameH / FrameW;
+    // Resize canvas and update WindowWidth / WindowHeight
+    SizeCanvas();
 
-        BackgroundFill = MakeBackground(CurrentRoom.background);     // the gradient depends on the height
-    });
+    // Preserve the player's relative horizontal position
+    let relativeX = oldPlayerX / oldW;
+    PlayerX = relativeX * WindowWidth;
+
+    // Update player dimensions
+    PlayerWidth = WindowWidth * 0.05;
+    PlayerHeight = PlayerWidth * FrameH / FrameW;
+
+    // Update ground position
+    OriginalY = WindowHeight / 1.2;
+
+    if (wasOnGround) {
+        PlayerY = OriginalY;
+    } else {
+        PlayerY *= WindowHeight / oldH;
+    }
+
+    StartY *= WindowHeight / oldH;
+    FallStartY *= WindowHeight / oldH;
+
+    JumpHeight = WindowHeight / 6;
+
+    // Keep player inside the screen
+    PlayerX = Math.max(0, Math.min(PlayerX, WindowWidth - PlayerWidth));
+
+    BackgroundFill = MakeBackground(CurrentRoom.background);
+
+    console.log("Old X:", oldPlayerX);
+    console.log("New X:", PlayerX);
+    console.log("Old width:", oldW);
+    console.log("New width:", WindowWidth);
+});
 
     // ---------- Save data ----------
     // Everything that counts as progress lives in this one object.
