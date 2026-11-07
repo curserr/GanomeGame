@@ -6,7 +6,7 @@
 //  This file knows nothing about the game: it is given three functions to call.
 // =====================================================================
 
-const StepMs = 1000 / 60;
+const StepMs = 1000 / 120;
 let LastTime = 0;
 let Leftover = 0;
 
