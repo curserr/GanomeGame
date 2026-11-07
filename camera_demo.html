@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Camera demo (multi-file)</title>
+
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background-color: black;
+    }
+
+    /* The game fills the whole window. The canvas (game world) and the interface layer sit on top of each other. */
+    #screen {
+        position: fixed;
+        inset: 0;
+    }
+
+    canvas {
+        display: block;
+        background: black;
+    }
+
+    /* Everything that is interface (text, menus, dialogue, bars) is plain HTML and CSS in this layer.
+       The camera never moves it. */
+    #ui {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        font-family: monospace;
+        color: white;
+    }
+
+    #Debug {
+        position: absolute;
+        left: 8px;
+        top: 8px;
+        font-size: 14px;
+        line-height: 1.4;
+        white-space: pre;
+        text-shadow: 0 0 4px black;
+    }
+
+    #Hint {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        font-size: 14px;
+        opacity: 0.7;
+        text-align: right;
+        text-shadow: 0 0 4px black;
+    }
+
+    /* Small map of the room: the gold box is what the camera currently shows */
+    #Mini {
+        position: absolute;
+        left: 50%;
+        bottom: 14px;
+        transform: translateX(-50%);
+        width: min(60vw, 520px);
+        text-align: center;
+        font-size: 12px;
+        text-shadow: 0 0 4px black;
+    }
+
+    #MiniBar {
+        position: relative;
+        height: 10px;
+        margin-top: 4px;
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    #MiniView {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: rgba(201, 161, 91, 0.6);
+    }
+
+    #MiniPlayer {
+        position: absolute;
+        top: -3px;
+        width: 4px;
+        height: 16px;
+        background: white;
+    }
+
+    /* Pause / save menu */
+    #Menu {
+        position: absolute;
+        inset: 0;
+        display: none;                    /* shown with Esc */
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.7);
+        pointer-events: auto;
+    }
+
+    #MenuBox {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 240px;
+        padding: 24px 32px;
+        background: #1d1d2b;
+        border: 3px solid #c9a15b;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    #MenuBox h2 { margin: 0 0 8px; }
+
+    #MenuBox button {
+        padding: 10px;
+        font: 16px monospace;
+        color: white;
+        background: #34344d;
+        border: 2px solid #c9a15b;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    #MenuBox button.selected { background: #4a4a6e; }
+    #MenuBox button:disabled { opacity: 0.4; cursor: default; }
+
+    #MenuStatus { min-height: 1.2em; margin: 4px 0 0; font-size: 14px; color: #c9a15b; }
+
+    /* Dialogue box (filled in by dialogue.js) */
+    #Dialogue {
+        position: absolute;
+        left: 50%;
+        top: 90px;                        /* up in the sky, so it does not cover the characters */
+        transform: translateX(-50%);
+        display: none;                    /* shown during a conversation */
+        width: min(86vw, 720px);
+        padding: 16px 20px;
+        background: #1d1d2b;
+        border: 3px solid #c9a15b;
+        border-radius: 8px;
+        pointer-events: auto;
+    }
+
+    #DialogueName { color: #c9a15b; font-weight: bold; margin-bottom: 6px; }
+    #DialogueText { font-size: 18px; line-height: 1.4; min-height: 2.8em; }
+    #DialogueChoices { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+
+    #DialogueChoices button {
+        padding: 8px 10px;
+        font: 16px monospace;
+        text-align: left;
+        color: white;
+        background: #34344d;
+        border: 2px solid #c9a15b;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    #DialogueChoices button.selected { background: #4a4a6e; }
+    #DialogueHint { margin-top: 8px; font-size: 12px; opacity: 0.6; text-align: right; }
+</style>
+</head>
+
+<body>
+
+<div id="screen">
+    <canvas id="game"></canvas>
+
+    <div id="ui">
+        <div id="Debug"></div>
+        <div id="Hint">&larr; &rarr; move &nbsp; Space jump (twice = double jump)<br>E talk &nbsp; Esc menu &nbsp; D debug text</div>
+
+        <div id="Mini">
+            <div id="MiniLabel"></div>
+            <div id="MiniBar"><div id="MiniView"></div><div id="MiniPlayer"></div></div>
+        </div>
+
+        <div id="Menu">
+            <div id="MenuBox">
+                <h2>Menu</h2>
+                <button id="BtnResume">Resume</button>
+                <button id="BtnSave">Save game</button>
+                <button id="BtnLoad">Load game</button>
+                <p id="MenuStatus"></p>
+            </div>
+        </div>
+
+        <div id="Dialogue">
+            <div id="DialogueName"></div>
+            <div id="DialogueText"></div>
+            <div id="DialogueChoices"></div>
+            <div id="DialogueHint"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Load order matters: main.js must be last. -->
+<script src="js/utils.js"></script>
+<script src="js/canvas.js"></script>
+<script src="js/input.js"></script>
+<script src="js/camera.js"></script>
+<script src="js/collision.js"></script>
+<script src="js/terrain.js"></script>
+<script src="js/player.js"></script>
+<script src="js/rooms.js"></script>
+<script src="js/enemies.js"></script>
+<script src="js/bosses.js"></script>
+<script src="js/npcs.js"></script>
+<script src="js/dialogue.js"></script>
+<script src="js/save.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/loop.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>
