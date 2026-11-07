@@ -38,10 +38,10 @@ let PlayerY = 0;                          // set in InitPlayer (needs OriginalY 
 let StartY = 0;                           // where the current jump began
 let FallStartY = 0;                       // where the fall began (the top of the jump)
 
-const WalkSpeed = 4;                      // units per game step
-const JumpSpeed = 5;
+const WalkSpeed = 2;                      // units per game step
+const JumpSpeed = 3;
 const JumpHeight = 120;
-const FallSpeed = 2;
+const FallSpeed = 1;
 
 let PlayerJump = false;      // true while rising
 let PlayerOnGround = true;
