@@ -42,6 +42,8 @@ const WalkSpeed = 4;                      // units per game step
 const JumpSpeed = 5;
 const JumpHeight = 120;
 const FallSpeed = 2;
+const GravitationalConstant = 10;
+let PlayerWeight = 70;
 
 let PlayerJump = false;      // true while rising
 let PlayerOnGround = true;
@@ -144,6 +146,7 @@ function Jump()
 
 function Gravity()
 {
+    FallSpeed += GravitationalConstant;
     PlayerY += FallSpeed;
 }
 
