@@ -61,8 +61,8 @@ const Rooms = {
         width: 1280 * 6,
         background: ["#2b1a0e", "#7a4a22"],
         exits: { left: "cave" },
-        props: BuildProps(1280 * 6, 33)
-        // To try a boss here, add:  boss: { type: "guardian", x: 6000 }
+        props: BuildProps(1280 * 6, 33),
+        boss: { type: "guardian", x: 6000 }
     }
 };
 
