@@ -37,11 +37,8 @@ function TouchesPlayer(rect)
 function ResolveCollisions()
 {
     // Floor
-    if (PlayerY > OriginalY)
-    {
-        PlayerY = OriginalY;
-        FallSpeed = 0;
-    }
+    if (PlayerY > OriginalY)  PlayerY = OriginalY;
+    
     // Walking off the edge of the ROOM goes to the neighbouring room
     let maxX = CurrentRoom.width - PlayerW;
     if (PlayerX > maxX && CurrentRoom.exits.right) ChangeRoom(CurrentRoom.exits.right, "left");
