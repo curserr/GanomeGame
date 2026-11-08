@@ -41,8 +41,8 @@ let FallStartY = 0;                       // where the fall began (the top of th
 const WalkSpeed = 2;                      // units per game step
 const JumpSpeed = 3;
 const JumpHeight = 120;
-const FallSpeed = 1;
-const GravConstant = 60;
+let FallSpeed = 0;
+const GravConstant = 10;
 
 let PlayerJump = false;      // true while rising
 let PlayerOnGround = true;
@@ -121,6 +121,10 @@ function UpdatePlayer()
     }
 }
 
+/////////////////////////////
+///
+////////////////////////////
+
 function StartJump()
 {
     PlayerJump = true;
@@ -128,7 +132,12 @@ function StartJump()
     StartY = PlayerY;
     AnimIndex = 0;       // so the fall tumble starts from its first frame
     AnimTimer = 0;
+    JumpSpeed = 0;
 }
+
+/////////////////////////////
+///
+////////////////////////////
 
 function Jump()
 {
@@ -143,11 +152,19 @@ function Jump()
     }
 }
 
+/////////////////////////////
+///
+////////////////////////////
+
 function Gravity()
 {
     FallSpeed += GravConstant;
     PlayerY += FallSpeed;
 }
+
+/////////////////////////////
+///
+////////////////////////////
 
 // ---------- Hooks used by other files ----------
 
@@ -157,6 +174,10 @@ function PlacePlayerAtEdge(side)
     if (side === "left")  PlayerX = 0;
     if (side === "right") PlayerX = CurrentRoom.width - PlayerW;
 }
+
+/////////////////////////////
+///
+////////////////////////////
 
 // Stops every jump / animation state (used when loading a save)
 function ResetPlayerMotion()
@@ -169,6 +190,7 @@ function ResetPlayerMotion()
     InteractRequested = false;
     Spinning = false;
     HurtTimer = 0;
+    FallSpeed = 0;
 }
 
 // An enemy or boss touched the player: knock him away from it. sourceX is the enemy's centre.
