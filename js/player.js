@@ -39,10 +39,11 @@ let StartY = 0;                           // where the current jump began
 let FallStartY = 0;                       // where the fall began (the top of the jump)
 
 const WalkSpeed = 2;                      // units per game step
-const JumpSpeed = 3;
+let JumpSpeed = 5;
 const JumpHeight = 120;
-let FallSpeed = 1;
-const GravConstant = 0.05;
+let FallSpeed = 0;
+const GravConstant = 0.04;
+let PlayerJumpVelocity = 0;
 
 let PlayerJump = false;      // true while rising
 let PlayerOnGround = true;
@@ -132,7 +133,8 @@ function StartJump()
     StartY = PlayerY;
     AnimIndex = 0;       // so the fall tumble starts from its first frame
     AnimTimer = 0;
-    //FallSpeed = 0;
+    FallSpeed = 0;
+    JumpSpeed = 5;
 }
 
 /////////////////////////////
@@ -143,6 +145,7 @@ function Jump()
 {
     if (StartY - PlayerY < JumpHeight)
     {
+        JumpSpeed -= GravConstant;
         PlayerY -= JumpSpeed;
     }
     else
@@ -158,7 +161,7 @@ function Jump()
 
 function Gravity()
 {
-    //FallSpeed += GravConstant;
+    FallSpeed += GravConstant;
     PlayerY += FallSpeed;
 }
 
@@ -190,7 +193,7 @@ function ResetPlayerMotion()
     InteractRequested = false;
     Spinning = false;
     HurtTimer = 0;
-    //FallSpeed = 0;
+    FallSpeed = 0;
 }
 
 // An enemy or boss touched the player: knock him away from it. sourceX is the enemy's centre.
