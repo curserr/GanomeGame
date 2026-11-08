@@ -41,9 +41,9 @@ let FallStartY = 0;                       // where the fall began (the top of th
 const WalkSpeed = 2;                      // units per game step
 let JumpSpeed = 5;
 const JumpHeight = 120;
-let FallSpeed = 0;
-const GravConstant = 0.06;
-let PlayerJumpVelocity = 0;
+let FallSpeed = 2;
+const GravConstant = 0.07;
+let IncreaseSpeedHeight = JumpHeight*2;
 
 let PlayerJump = false;      // true while rising
 let PlayerOnGround = true;
@@ -51,6 +51,7 @@ let JumpsUsed = 0;
 const MaxJumps = 2;          // 2 = double jump
 let PlayerMove = false;      // true while an arrow key is moving the character
 let LeftPlayer = false;      // true = facing left
+let LandingY;
 
 let AnimTimer = 0;
 let AnimIndex = 0;
@@ -145,7 +146,6 @@ function Jump()
 {
     if (StartY - PlayerY < JumpHeight)
     {
-        JumpSpeed -= GravConstant;
         PlayerY -= JumpSpeed;
     }
     else
@@ -161,7 +161,8 @@ function Jump()
 
 function Gravity()
 {
-    FallSpeed += GravConstant;
+    let HeightTraversed = PlayerY - FallStartY;
+    if(FallSpeed < 8 && HeightTraversed > IncreaseSpeedHeight) FallSpeed += GravConstant;
     PlayerY += FallSpeed;
 }
 
@@ -194,6 +195,7 @@ function ResetPlayerMotion()
     Spinning = false;
     HurtTimer = 0;
     FallSpeed = 0;
+    JumpSpeed = 5;
 }
 
 // An enemy or boss touched the player: knock him away from it. sourceX is the enemy's centre.
