@@ -132,7 +132,7 @@ function StartJump()
     StartY = PlayerY;
     AnimIndex = 0;       // so the fall tumble starts from its first frame
     AnimTimer = 0;
-    FallSpeed = 0;
+    //FallSpeed = 0;
 }
 
 /////////////////////////////
@@ -190,7 +190,7 @@ function ResetPlayerMotion()
     InteractRequested = false;
     Spinning = false;
     HurtTimer = 0;
-    FallSpeed = 0;
+    //FallSpeed = 0;
 }
 
 // An enemy or boss touched the player: knock him away from it. sourceX is the enemy's centre.
