@@ -41,7 +41,7 @@ let FallStartY = 0;                       // where the fall began (the top of th
 const WalkSpeed = 2;                      // units per game step
 const JumpSpeed = 3;
 const JumpHeight = 120;
-let FallSpeed = 0;
+let FallSpeed = 1;
 const GravConstant = 0.05;
 
 let PlayerJump = false;      // true while rising
@@ -158,7 +158,7 @@ function Jump()
 
 function Gravity()
 {
-    FallSpeed += GravConstant;
+    //FallSpeed += GravConstant;
     PlayerY += FallSpeed;
 }
 
