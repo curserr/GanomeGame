@@ -42,7 +42,7 @@ const WalkSpeed = 2;                      // units per game step
 const JumpSpeed = 3;
 const JumpHeight = 120;
 let FallSpeed = 0;
-const GravConstant = 0.0002;
+const GravConstant = 0.2;
 
 let PlayerJump = false;      // true while rising
 let PlayerOnGround = true;
