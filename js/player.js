@@ -36,7 +36,7 @@ let SheetImg = null;
 let PlayerX = 200;                        // position inside the CURRENT ROOM, from its left edge
 let PlayerY = 600;                        
 let StartY = PlayerY;                           
-let FallStartY = StartY - JumpHeight;     // where the fall began (the top of the jump)
+
 
 const WalkSpeed = 2;                      // units per game step
 let JumpSpeed = 3;
@@ -50,6 +50,7 @@ let PlayerOnGround = true;
 let PlayerMove = false;      // true while an arrow key is moving the character
 let LeftPlayer = false;      // true = facing left
 let LandingY = StartY;
+let FallStartY = StartY - JumpHeight;     // where the fall began (the top of the jump)
 
 let AnimTimer = 0;
 let AnimIndex = 0;
