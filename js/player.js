@@ -39,7 +39,7 @@ let StartY = 0;                           // where the current jump began
 let FallStartY = 0;                       // where the fall began (the top of the jump)
 
 const WalkSpeed = 2;                      // units per game step
-let JumpSpeed = 5;
+let JumpSpeed = 3;
 const JumpHeight = 120;
 let FallSpeed = 2;
 const GravConstant = 0.07;
