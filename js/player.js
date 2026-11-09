@@ -50,6 +50,7 @@ let PlayerOnGround = true;
 let JumpsUsed = 0;
 const MaxJumps = 2;          // 2 = double jump
 let PlayerMove = false;      // true while an arrow key is moving the character
+let WasOnGround = true;
 let LeftPlayer = false;      // true = facing left
 let LandingY;
 
@@ -76,9 +77,14 @@ function InitPlayer()
 // ---------- Moving ----------
 function UpdatePlayer()
 {
+    PrevFeetY = PlayerY + PlayerH;
+    GroundY = FindGroundY(PrevFeetY);
+
     // Ground check
     PlayerOnGround = (PlayerY >= OriginalY);
     if (PlayerOnGround && !PlayerJump) JumpsUsed = 0;
+    if (WasOnGround && !PlayerOnGround && !PlayerJump) FallStartY = PlayerY;
+    WasOnGround = PlayerOnGround;
 
     if (HurtTimer > 0) HurtTimer--;
 
@@ -117,7 +123,7 @@ function UpdatePlayer()
     {
         Jump();
     }
-    else if (PlayerY < OriginalY)
+    else if (PlayerY < GroundY)
     {
         Gravity();
     }
@@ -256,8 +262,10 @@ function ChooseFrame()
         }
 
         // Coming down. Progress is how far down he has dropped (0 at the top, 1 at the ground).
-        let total = OriginalY - FallStartY;
+        let total = GroundY - FallStartY;
         let progress = (total > 0) ? (PlayerY - FallStartY) / total : 1;
+        progress = Math.max(0, Math.min(1, progress));
+
 
         // First part: step through all the tumble poses once, ending on the last one
         if (progress < SpinStart)
