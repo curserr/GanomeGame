@@ -181,7 +181,7 @@ function DrawPlatforms()
 {
     for (let platform of Platforms)
     {
-        if (platform.x + platform.w < CameraX - 50 || p.x > CameraX + ViewW + 50) continue;     // off screen: skip
+        if (platform.x + platform.w < CameraX - 50 || platform.x > CameraX + ViewW + 50) continue;     // off screen: skip
         if (!platform.image.complete || platform.image.naturalWidth === 0) continue;              // picture not loaded yet
  
         ctx.drawImage(platform.image, platform.sx, platform.sy, platform.sw, platform.sh, platform.x, platform.y, platform.w, platform.h);
