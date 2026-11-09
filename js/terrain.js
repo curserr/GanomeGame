@@ -26,7 +26,7 @@ const PlatformDimensions = {
 
 
 
-SheetImgDarkPlatforms = new Image();
+const SheetImgDarkPlatforms = new Image();
 SheetImgDarkPlatforms.src = "DarkPlatforms.png";
 
 // Where each piece sits inside the platform sprite sheet (2 columns x 3 rows, every cell 1272 x 224).
