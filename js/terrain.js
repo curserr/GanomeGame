@@ -7,6 +7,49 @@
 // =====================================================================
 
 let Stars = [];
+const PlatformDimensions = {
+    small: { width: 317,height: 155},
+    medium1: {width: 616,height: 167},
+    medium2: {width: 523,height: 169},
+    big1: {width: 1031,height: 183 },
+    big2: {width: 722,height: 204},
+    large: {width: 1255,height: 207 }
+};
+
+  const PlatformTypes = 
+  {
+    STONE: "stone",
+    WOOD: "wood",
+    CORRUPTED: "corrupted",
+    DARK1:"Dark1"
+  };
+
+
+
+SheetImgDarkPlatforms = new Image();
+SheetImgDarkPlatforms.src = "DarkPlatforms.png";
+
+// Where each piece sits inside the platform sprite sheet (2 columns x 3 rows, every cell 1272 x 224).
+// col/row = which cell, x/y = where the piece starts inside that cell. The piece sizes are in PlatformDimensions.
+const PlatformSheets = {};
+PlatformSheets[PlatformTypes.DARK1] = {
+    image: SheetImgDarkPlatforms,
+    cellW: 1272,
+    cellH: 224,
+    pieces: {
+        small:   { col: 0, row: 0, x: 477, y: 8 },
+        medium1: { col: 1, row: 0, x: 328, y: 8 },
+        medium2: { col: 0, row: 1, x: 374, y: 8 },
+        big1:    { col: 1, row: 1, x: 120, y: 8 },
+        big2:    { col: 0, row: 2, x: 275, y: 8 },
+        large:   { col: 1, row: 2, x: 8,   y: 8 }
+    }
+};
+
+const PlatformSurfaceInset = 6;               // units from the top of the picture to the surface the feet stand on
+ 
+let Platforms = [];   
+
 
 function InitTerrain()
 {
@@ -14,6 +57,43 @@ function InitTerrain()
     Stars = [];
     for (let i = 0; i < 160; i++) Stars.push({ u: r(), v: r(), size: 1.5 + r() * 2.5 });
 }
+
+/////////////////////////////
+///
+////////////////////////////
+
+function LoadPlatforms(room)
+{
+    Platforms = [];
+ 
+    for (let spec of (room.platforms || []))
+    {
+        let sheet = PlatformSheets[spec.type];
+        let size  = spec.size || "medium1";
+        let piece = sheet && sheet.pieces[size];
+        let dim   = PlatformDimensions[size];
+ 
+        if (!piece || !dim) { console.warn("Unknown platform:", spec); continue; }
+ 
+        let scale = spec.scale || 1;
+        Platforms.push({
+            image: sheet.image,
+            sx: piece.col * sheet.cellW + piece.x,       // the piece's rectangle inside the sheet
+            sy: piece.row * sheet.cellH + piece.y,
+            sw: dim.width,
+            sh: dim.height,
+            x: spec.x,
+            y: spec.y,
+            w: dim.width * scale,
+            h: dim.height * scale,
+            surface: spec.y + PlatformSurfaceInset * scale      // the line the player's feet rest on
+        });
+    }
+}
+
+/////////////////////////////
+///
+////////////////////////////
 
 // Screen space + the slow far layers. The background fills the whole window and never moves.
 function DrawBackground()
@@ -26,14 +106,23 @@ function DrawBackground()
     DrawMountains();
 }
 
+/////////////////////////////
+///
+////////////////////////////
+
 // The world itself, shifted by the camera
 function DrawTerrain()
 {
     UseWorldSpace(1);
     DrawFloor();
+    DrawPlatforms();
     DrawRuler();
     DrawProps();
 }
+
+/////////////////////////////
+///
+////////////////////////////
 
 // Far layer: stars. They barely move with the camera, so they look very far away.
 function DrawStars()
@@ -43,6 +132,10 @@ function DrawStars()
     let span = CurrentRoom.width * 0.2 + ViewW * 2;
     for (let s of Stars) ctx.fillRect(s.u * span - ViewW, s.v * (FloorY - 40), s.size, s.size);
 }
+
+/////////////////////////////
+///
+////////////////////////////
 
 // Middle layer: dark mountains. They move at half speed.
 function DrawMountains()
@@ -67,6 +160,10 @@ function DrawMountains()
     }
 }
 
+/////////////////////////////
+///
+////////////////////////////
+
 // The floor, drawn across everything that is visible
 function DrawFloor()
 {
@@ -75,6 +172,25 @@ function DrawFloor()
     ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
     ctx.fillRect(CameraX - 100, FloorY, ViewW + 200, 3);
 }
+
+/////////////////////////////
+///
+////////////////////////////
+
+function DrawPlatforms()
+{
+    for (let platform of Platforms)
+    {
+        if (platform.x + platform.w < CameraX - 50 || p.x > CameraX + ViewW + 50) continue;     // off screen: skip
+        if (!platform.image.complete || platform.image.naturalWidth === 0) continue;              // picture not loaded yet
+ 
+        ctx.drawImage(platform.image, platform.sx, platform.sy, platform.sw, platform.sh, platform.x, platform.y, platform.w, platform.h);
+    }
+}
+
+/////////////////////////////
+///
+////////////////////////////
 
 // A faint ruler: a line every 250 units with its world position written on it
 function DrawRuler()
@@ -94,6 +210,10 @@ function DrawRuler()
         ctx.fillText(String(x), x + 4, 120);          // low enough not to sit under the debug text
     }
 }
+
+/////////////////////////////
+///
+////////////////////////////
 
 // The reference objects of the current room (emojis, pillars). Replace with real scenery later.
 function DrawProps()
@@ -121,6 +241,10 @@ function DrawProps()
         }
     }
 }
+
+/////////////////////////////
+///
+////////////////////////////
 
 // Everything beyond the room's edges is darkened, so you can see where the room ends.
 // Drawn last, on top of the characters.
