@@ -86,16 +86,21 @@ function ResolveCollisions()
     let maxX = CurrentRoom.width - PlayerW;
     if (PlayerX > maxX && CurrentRoom.exits.right) ChangeRoom(CurrentRoom.exits.right, "left");
     else if (PlayerX < 0 && CurrentRoom.exits.left) ChangeRoom(CurrentRoom.exits.left, "right");
- 
+
     // Keep the player inside the room
     PlayerX = Math.max(0, Math.min(PlayerX, CurrentRoom.width - PlayerW));
     PlayerY = Math.max(0, Math.min(PlayerY, RoomHeight() - PlayerH));
- 
-    // Floor and platforms: land on whatever is under him
-    GroundY = FindGroundY(PrevFeetY);
-    if (PlayerY > GroundY) PlayerY = GroundY;
- 
-    // Update the ground state after moving, so the sprite frame matches this step's position
-    PlayerOnGround = (PlayerY >= GroundY);
-}
 
+    // Recalculate which surface is underneath the player's NEW horizontal position
+    GroundY = FindGroundY(PrevFeetY);
+
+    // Land on the surface if the player has fallen through it
+    if (PlayerY > GroundY)
+    {
+        PlayerY = GroundY;
+        FallSpeed = 0;
+    }
+
+    // Update the ground state
+    PlayerOnGround = (PlayerY >= GroundY - 0.01);
+}
