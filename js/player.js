@@ -12,8 +12,8 @@ const SheetRows = 3;
 const FrameW = 224;                       // one frame of the sheet, in sheet pixels
 const FrameH = 304;
 
-const PlayerW = 64;                       // size of the player in units
-const PlayerH = PlayerW * FrameH / FrameW;
+const PlayerWidth = 64;                       // size of the player in units
+const PlayerHeight = PlayerWidth * FrameH / FrameW;
 
 // Frame numbers count left to right, top to bottom (0 to 14)
 //   row 1: 0  1  2  3  4
@@ -77,11 +77,11 @@ function InitPlayer()
 // ---------- Moving ----------
 function UpdatePlayer()
 {
-    PrevFeetY = PlayerY + PlayerH;
+    PrevFeetY = PlayerY + PlayerHeight;
     GroundY = FindGroundY(PrevFeetY);
 
     // Ground check
-    PlayerOnGround = (PlayerY >= OriginalY);
+    PlayerOnGround = (PlayerY >= GroundY - 0.01);
     if (PlayerOnGround && !PlayerJump) JumpsUsed = 0;
     if (WasOnGround && !PlayerOnGround && !PlayerJump) FallStartY = PlayerY;
     WasOnGround = PlayerOnGround;
@@ -183,7 +183,7 @@ function Gravity()
 function PlacePlayerAtEdge(side)
 {
     if (side === "left")  PlayerX = 0;
-    if (side === "right") PlayerX = CurrentRoom.width - PlayerW;
+    if (side === "right") PlayerX = CurrentRoom.width - PlayerWidth;
 }
 
 /////////////////////////////
@@ -213,9 +213,9 @@ function HurtPlayer(sourceX)
     HurtTimer = 60;
     HitsTaken++;
 
-    let away = (PlayerX + PlayerW / 2 < sourceX) ? -1 : 1;
+    let away = (PlayerX + PlayerWidth / 2 < sourceX) ? -1 : 1;
     PlayerX += away * 80;
-    PlayerX = Math.max(0, Math.min(PlayerX, CurrentRoom.width - PlayerW));
+    PlayerX = Math.max(0, Math.min(PlayerX, CurrentRoom.width - PlayerWidth));
 }
 
 // While a dialogue is open the player just stands there
@@ -313,13 +313,13 @@ function DrawPlayer()
 
     if (LeftPlayer)
     {
-        ctx.translate(PlayerX + PlayerW, PlayerY);
+        ctx.translate(PlayerX + PlayerWidth, PlayerY);
         ctx.scale(-1, 1);                    // mirror to face left
     }
     else
     {
         ctx.translate(PlayerX, PlayerY);
     }
-    ctx.drawImage(SheetImg, col * FrameW, row * FrameH, FrameW, FrameH, 0, 0, PlayerW, PlayerH);
+    ctx.drawImage(SheetImg, col * FrameW, row * FrameH, FrameW, FrameH, 0, 0, PlayerWidth, PlayerHeight);
     ctx.restore();
 }
