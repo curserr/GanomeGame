@@ -8,7 +8,6 @@
 //  Later, platforms and walls go here too.
 // =====================================================================
 
-const OriginalY = 600;                        // ground level: the top of the player when he stands on the floor
 let FloorY;                                   // the line his feet are on
 const PlayerDimensions = {
     width: 224,
@@ -19,7 +18,7 @@ const PlayerDimensions = {
 
 function InitCollision()
 {
-    FloorY = OriginalY + PlayerH;
+    FloorY = StartY + PlayerHeight;
 }
 
 /////////////////////////////
@@ -29,7 +28,7 @@ function InitCollision()
 // The player's box. It is a little narrower than the picture so touching feels fair.
 function PlayerRect()
 {
-    return { x: PlayerX + 10, y: PlayerY + 6, w: PlayerW - 20, h: PlayerH - 6 };
+    return { x: PlayerX + 10, y: PlayerY + 6, w: PlayerWidth - 20, h: PlayerHeight - 6 };
 }
 
 /////////////////////////////
@@ -59,20 +58,28 @@ function TouchesPlayer(rect)
 // Platforms are ONE-WAY: he can jump up through them and land on top.
 // A platform only counts if his feet were above its surface at the START of the step (prevFeetY);
 // that is what lets him rise through it from below, and stops him tunnelling through it when falling.
-function FindGroundY(prevFeetY)
+function CheckPlatformCollision()
 {
-    let surface = FloorY;
     let left  = PlayerX + 14;                 // only his feet count, not his whole width
-    let right = PlayerX + PlayerW - 14;
+    let right = PlayerX + PlayerWidth - 14;
  
-    for (let p of Platforms)
+    for (let platform of Platforms)
     {
-        if (right < p.x || left > p.x + p.w) continue;        // not above/below this platform
-        if (p.surface < prevFeetY - 0.01) continue;           // his feet are below it: he is under it
-        if (p.surface < surface) surface = p.surface;         // keep the highest one under him
+        if (right < platform.x || left > platform.x + platform.w) continue;        // not above/below this platform
+        
+        if (PlayerJump && PlayerY <= platform.y + platform.height)
+        {
+            PlayerY = platform.y + platform.height;
+            FallStartY = PlayerY;
+            PlayerJump = false;
+        }
+
+        if(PlayerY + PlayerHeight < platform.y)
+        {
+            LandingY = platform.y;
+        }
+
     }
- 
-    return surface - PlayerH;
 }
 
 /////////////////////////////
@@ -83,24 +90,20 @@ function FindGroundY(prevFeetY)
 function ResolveCollisions()
 {
     // Walking off the edge of the ROOM goes to the neighbouring room
-    let maxX = CurrentRoom.width - PlayerW;
+    let maxX = CurrentRoom.width - PlayerWidth;
     if (PlayerX > maxX && CurrentRoom.exits.right) ChangeRoom(CurrentRoom.exits.right, "left");
     else if (PlayerX < 0 && CurrentRoom.exits.left) ChangeRoom(CurrentRoom.exits.left, "right");
 
     // Keep the player inside the room
-    PlayerX = Math.max(0, Math.min(PlayerX, CurrentRoom.width - PlayerW));
-    PlayerY = Math.max(0, Math.min(PlayerY, RoomHeight() - PlayerH));
-
-    // Recalculate which surface is underneath the player's NEW horizontal position
-    GroundY = FindGroundY(PrevFeetY);
+    PlayerX = Math.max(0, Math.min(PlayerX, CurrentRoom.width - PlayerWidth));
+    PlayerY = Math.max(0, Math.min(PlayerY, RoomHeight() - PlayerHeight));
 
     // Land on the surface if the player has fallen through it
-    if (PlayerY > GroundY)
+    if (PlayerY > LandingY)
     {
-        PlayerY = GroundY;
-        FallSpeed = 0;
+        PlayerY = LandingY;
     }
-
+    
     // Update the ground state
-    PlayerOnGround = (PlayerY >= GroundY - 0.01);
+    PlayerOnGround = (PlayerY >= LandingY - 0.01);
 }
