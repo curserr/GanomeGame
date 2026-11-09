@@ -39,6 +39,10 @@ function BuildProps(width, seed)
     return list;
 }
 
+/////////////////////////////
+///
+////////////////////////////
+
 const Rooms = {
     hall: {
         name: "Hall (fixed room, 1 screen)",
@@ -54,7 +58,13 @@ const Rooms = {
         background: ["#0d2330", "#1f5666"],
         exits: { left: "hall", right: "road" },
         props: BuildProps(1280 * 3, 22),
-        enemies: [{ type: "snail", x: 1000 }, { type: "snail", x: 2400 }]
+        enemies: [{ type: "snail", x: 1000 }, { type: "snail", x: 2400 }],
+                platforms: [
+            { type: PlatformTypes.DARK1, size: "small",   x: 300,  y: 560 },     // reachable with one jump
+            { type: PlatformTypes.DARK1, size: "medium1", x: 650,  y: 480 },     // reachable with a double jump
+            { type: PlatformTypes.DARK1, size: "big1",    x: 1500, y: 520 }
+        ]
+
     },
     road: {
         name: "Long road (scrolling, 6 screens)",
@@ -76,16 +86,28 @@ function InitRooms()
     CurrentRoom = Rooms.hall;
 }
 
+/////////////////////////////
+///
+////////////////////////////
+
 function RoomHeight()
 {
     return CurrentRoom.height || DesignH;
 }
+
+/////////////////////////////
+///
+////////////////////////////
 
 // (Re)paints the background colour of the current room. Also needed after a window resize.
 function RefreshBackground()
 {
     BackgroundFill = MakeBackground(CurrentRoom.background);
 }
+
+/////////////////////////////
+///
+////////////////////////////
 
 // side: "left" or "right" = which edge of the new room the player appears at (leave out to keep the position)
 function ChangeRoom(roomName, side)
@@ -99,9 +121,15 @@ function ChangeRoom(roomName, side)
     PlacePlayerAtEdge(side);
     CloseDialogue();
     LoadRoomEntities();
+     PlayRoomMusic(CurrentRoom); 
+    UpdateCamera(true);
 
     UpdateCamera(true);                       // jump straight to the right view, don't glide in
 }
+
+/////////////////////////////
+///
+////////////////////////////
 
 // Fills the room with the enemies, NPCs and boss it lists
 function LoadRoomEntities()
