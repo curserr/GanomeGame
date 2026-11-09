@@ -134,7 +134,7 @@ function StartJump()
     StartY = PlayerY;
     AnimIndex = 0;       // so the fall tumble starts from its first frame
     AnimTimer = 0;
-    FallSpeed = 0;
+    FallSpeed = 2;
     JumpSpeed = 5;
 }
 
