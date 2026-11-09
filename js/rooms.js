@@ -137,4 +137,5 @@ function LoadRoomEntities()
     LoadEnemies(CurrentRoom);
     LoadBosses(CurrentRoom);
     LoadNpcs(CurrentRoom);
+    LoadPlatforms(CurrentRoom);
 }
