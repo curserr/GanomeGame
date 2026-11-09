@@ -34,9 +34,9 @@ let SheetImg = null;
 
 // ---------- State ----------
 let PlayerX = 200;                        // position inside the CURRENT ROOM, from its left edge
-let PlayerY = 0;                          // set in InitPlayer (needs OriginalY from collision.js)
-let StartY = 0;                           // where the current jump began
-let FallStartY = 0;                       // where the fall began (the top of the jump)
+let PlayerY = 600;                        
+let StartY = PlayerY;                           
+let FallStartY = StartY - JumpHeight;     // where the fall began (the top of the jump)
 
 const WalkSpeed = 2;                      // units per game step
 let JumpSpeed = 3;
@@ -47,12 +47,9 @@ let IncreaseSpeedHeight = JumpHeight*2;
 
 let PlayerJump = false;      // true while rising
 let PlayerOnGround = true;
-let JumpsUsed = 0;
-const MaxJumps = 2;          // 2 = double jump
 let PlayerMove = false;      // true while an arrow key is moving the character
-let WasOnGround = true;
 let LeftPlayer = false;      // true = facing left
-let LandingY;
+let LandingY = StartY;
 
 let AnimTimer = 0;
 let AnimIndex = 0;
@@ -70,23 +67,22 @@ function InitPlayer()
     SheetImg.src = "gnome_sheet_v2.png";
 
     PlayerX = 200;
-    PlayerY = OriginalY;
+    PlayerY = StartY;
     StartY = PlayerY;
 }
+
+/////////////////////////////
+///
+////////////////////////////
 
 // ---------- Moving ----------
 function UpdatePlayer()
 {
-    PrevFeetY = PlayerY + PlayerHeight;
-    GroundY = FindGroundY(PrevFeetY);
+    CheckPlatformCollision();
+    if(LandingY > PlayerY - PlayerHeight) FallStartY = PlayerY;
 
     // Ground check
-    PlayerOnGround = (PlayerY >= GroundY - 0.01);
-    if (PlayerOnGround && !PlayerJump) JumpsUsed = 0;
-    if (WasOnGround && !PlayerOnGround && !PlayerJump) FallStartY = PlayerY;
-    WasOnGround = PlayerOnGround;
-
-    if (HurtTimer > 0) HurtTimer--;
+    PlayerOnGround = (PlayerY >= LandingY - 0.01);
 
     // Horizontal movement and facing direction
     PlayerMove = false;
@@ -111,11 +107,7 @@ function UpdatePlayer()
         CrouchTimer--;
         if (CrouchTimer === 0) StartJump();
     }
-    else if (JumpRequested && JumpsUsed < MaxJumps)
-    {
-        if (PlayerOnGround) CrouchTimer = CrouchLength;
-        else StartJump();
-    }
+    
     JumpRequested = false;
 
     // Rising or falling
@@ -123,7 +115,7 @@ function UpdatePlayer()
     {
         Jump();
     }
-    else if (PlayerY < GroundY)
+    else if (PlayerY < LandingY)
     {
         Gravity();
     }
@@ -135,13 +127,14 @@ function UpdatePlayer()
 
 function StartJump()
 {
+    // Reset all variables that change during a jump, so that each jump starts in the same manner
     PlayerJump = true;
     JumpsUsed++;
     StartY = PlayerY;
     AnimIndex = 0;       // so the fall tumble starts from its first frame
     AnimTimer = 0;
     FallSpeed = 2;
-    JumpSpeed = 5;
+    FallStartY = StartY - JumpHeight;
 }
 
 /////////////////////////////
@@ -150,7 +143,7 @@ function StartJump()
 
 function Jump()
 {
-    if (StartY - PlayerY < JumpHeight)
+    if (StartY - PlayerY > FallStartY)
     {
         PlayerY -= JumpSpeed;
     }
@@ -193,7 +186,7 @@ function PlacePlayerAtEdge(side)
 // Stops every jump / animation state (used when loading a save)
 function ResetPlayerMotion()
 {
-    PlayerY = OriginalY;                      // always put him back on the ground
+    PlayerY = StartY;                      // always put him back on the ground
     PlayerJump = false;
     JumpsUsed = 0;
     CrouchTimer = 0;
@@ -201,8 +194,7 @@ function ResetPlayerMotion()
     InteractRequested = false;
     Spinning = false;
     HurtTimer = 0;
-    FallSpeed = 0;
-    JumpSpeed = 5;
+    FallStartY = StartY - JumpHeight;
 }
 
 // An enemy or boss touched the player: knock him away from it. sourceX is the enemy's centre.
@@ -262,7 +254,7 @@ function ChooseFrame()
         }
 
         // Coming down. Progress is how far down he has dropped (0 at the top, 1 at the ground).
-        let total = GroundY - FallStartY;
+        let total = LandingY - FallStartY;
         let progress = (total > 0) ? (PlayerY - FallStartY) / total : 1;
         progress = Math.max(0, Math.min(1, progress));
 
