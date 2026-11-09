@@ -46,28 +46,6 @@ function RectsOverlap(a, b)
 ///
 ////////////////////////////
 
-function CollisionCheckPlatform(roomName)
-{
-        if(roomName)
-        // Check if gnome is in place to stand on platform or hit head on it 
-
-        //  If player is above the platform
-        if(PlayerX + PlayerWidth > PlatformX && PlayerX < PlatformX + PlatformWidth && PlayerY >= PlatformY )
-        {
-            LandingY = PlatformY;
-        }
-        //  If Player is below the platform (hit head)
-        if(PlayerX + PlayerWidth > PlatformX && PlayerX < PlatformX + PlatformWidth && PlayerY < PlatformY )
-        {
-            FallStartY = PlatformY;
-        }
-        if(PlayerY = PlatformY) OriginalY = PlatformY;
-}
-
-/////////////////////////////
-///
-////////////////////////////
-
 function TouchesPlayer(rect)
 {
     return RectsOverlap(PlayerRect(), rect);
