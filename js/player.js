@@ -103,12 +103,16 @@ function UpdatePlayer()
     }
 
     // Jumping: crouch first when on the ground, jump straight away in the air
+    
+    if(CrouchTimer > 0)
+    {
+        CrouchTimer--;
+        if(CrouchTimer === 0 ) StartJump();
+    } 
+
     if (JumpRequested)
     {
-        if(PlayerOnGround) CrouchTimer = CrouchLength;
-    
-        if (CrouchTimer === 0) StartJump();
-        else if(CrouchTimer > 0) CrouchTimer--;
+        if(PlayerOnGround) CrouchTimer = CrouchLength;    
     }
     
     JumpRequested = false;
@@ -132,7 +136,6 @@ function StartJump()
 {
     // Reset all variables that change during a jump, so that each jump starts in the same manner
     PlayerJump = true;
-    JumpsUsed++;
     StartY = PlayerY;
     AnimIndex = 0;       // so the fall tumble starts from its first frame
     AnimTimer = 0;
