@@ -26,6 +26,11 @@ function InitNpcs()
     NearNpc = null;
 }
 
+/////////////////////////////
+///
+////////////////////////////
+
+
 function SpawnNpc(typeName, x)
 {
     let def = NpcTypes[typeName];
@@ -34,6 +39,11 @@ function SpawnNpc(typeName, x)
     Npcs.push({ type: typeName, def: def, x: x });
 }
 
+/////////////////////////////
+///
+////////////////////////////
+
+
 function LoadNpcs(room)
 {
     Npcs = [];
@@ -41,12 +51,17 @@ function LoadNpcs(room)
     for (let spawn of (room.npcs || [])) SpawnNpc(spawn.type, spawn.x);
 }
 
+/////////////////////////////
+///
+////////////////////////////
+
+
 function UpdateNpcs()
 {
     // Find the closest NPC within talking distance (only while standing on the ground)
     NearNpc = null;
     let best = TalkDistance;
-    let playerCentre = PlayerX + PlayerW / 2;
+    let playerCentre = PlayerX + PlayerWidth / 2;
 
     if (PlayerOnGround)
     {
@@ -61,6 +76,11 @@ function UpdateNpcs()
     if (InteractRequested && NearNpc) StartDialogue(NearNpc.def.dialogue);
     InteractRequested = false;
 }
+
+/////////////////////////////
+///
+////////////////////////////
+
 
 function DrawNpcs()
 {
