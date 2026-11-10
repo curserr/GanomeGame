@@ -18,11 +18,17 @@ function Start()
     InitNpcs();
     InitDialogue();
     InitSave();
+    InitSave();
+    InitAudio();      // <-- new
     InitUI();
 
     ChangeRoom("hall");
     StartLoop(UpdateGame, DrawGame, UpdateUI);
 }
+
+/////////////////////////////
+///
+////////////////////////////
 
 // One game step (60 per second)
 function UpdateGame()
@@ -36,6 +42,7 @@ function UpdateGame()
     }
 
     UpdatePlayer();
+    CheckPlatformCollision();
     ResolveCollisions();
     AnimatePlayer();
     UpdateNpcs();
@@ -43,6 +50,10 @@ function UpdateGame()
     UpdateBosses();
     UpdateCamera(false);
 }
+
+/////////////////////////////
+///
+////////////////////////////
 
 // One picture, drawn back to front
 function DrawGame()
