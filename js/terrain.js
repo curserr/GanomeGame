@@ -46,7 +46,7 @@ PlatformSheets[PlatformTypes.DARK1] = {
     }
 };
 
-const PlatformSurfaceInset = 6;               // units from the top of the picture to the surface the feet stand on
+const PlatformSurfaceInset = 4;               // units from the top of the picture to the surface the feet stand on
  
 let Platforms = [];   
 
@@ -84,8 +84,8 @@ function LoadPlatforms(room)
             sh: dim.height,
             x: spec.x,
             y: spec.y,
-            w: dim.width * scale,
-            h: dim.height * scale,
+            width: dim.width * scale,
+            height: dim.height * scale,
             surface: spec.y + PlatformSurfaceInset * scale      // the line the player's feet rest on
         });
     }
@@ -181,10 +181,10 @@ function DrawPlatforms()
 {
     for (let platform of Platforms)
     {
-        if (platform.x + platform.w < CameraX - 50 || platform.x > CameraX + ViewW + 50) continue;     // off screen: skip
+        if (platform.x + platform.width < CameraX - 50 || platform.x > CameraX + ViewW + 50) continue;     // off screen: skip
         if (!platform.image.complete || platform.image.naturalWidth === 0) continue;              // picture not loaded yet
  
-        ctx.drawImage(platform.image, platform.sx, platform.sy, platform.sw, platform.sh, platform.x, platform.y, platform.w, platform.h);
+        ctx.drawImage(platform.image, platform.sx, platform.sy, platform.sw, platform.sh, platform.x, platform.y, platform.width, platform.height);
     }
 }
 
