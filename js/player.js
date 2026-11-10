@@ -80,7 +80,6 @@ function InitPlayer()
 function UpdatePlayer()
 {
     CheckPlatformCollision();
-    if(LandingY > PlayerY - PlayerHeight) FallStartY = PlayerY;
 
     // Ground check
     PlayerOnGround = (PlayerY >= LandingY - 0.01);
