@@ -30,6 +30,7 @@ const SpinStart    = 0.6;                 // fraction of the drop spent stepping
 const AnimDelay = 6;          // game steps per animation frame (bigger = slower)
 const CrouchLength = 5;       // game steps spent crouching before a ground jump
 let falling = false;
+let PreviousPlayerY;
 
 let SheetImg = null;
 
@@ -79,7 +80,7 @@ function InitPlayer()
 // ---------- Moving ----------
 function UpdatePlayer()
 {
-    let PreviousPlayerY = PlayerY;
+    PreviousPlayerY = PlayerY;
     // Ground check
     PlayerOnGround = (PlayerY >= LandingY - 0.01);
 
