@@ -168,7 +168,6 @@ function Gravity()
 {
     let HeightTraversed = PlayerY - FallStartY;
     if(FallSpeed < 8 && HeightTraversed > JumpHeight*2) FallSpeed += GravConstant;
-    
     PlayerY += FallSpeed;
 }
 
