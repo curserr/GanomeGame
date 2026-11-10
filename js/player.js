@@ -29,6 +29,7 @@ const SpinStart    = 0.6;                 // fraction of the drop spent stepping
 
 const AnimDelay = 6;          // game steps per animation frame (bigger = slower)
 const CrouchLength = 5;       // game steps spent crouching before a ground jump
+let falling = false;
 
 let SheetImg = null;
 
@@ -40,10 +41,9 @@ let StartY = PlayerY;
 
 const WalkSpeed = 2;                      // units per game step
 let JumpSpeed = 3;
-const JumpHeight = 120;
+const JumpHeight = 150;
 let FallSpeed = 2;
 const GravConstant = 0.07;
-let IncreaseSpeedHeight = JumpHeight*2;
 
 let PlayerJump = false;      // true while rising
 let PlayerOnGround = true;
@@ -79,8 +79,7 @@ function InitPlayer()
 // ---------- Moving ----------
 function UpdatePlayer()
 {
-    CheckPlatformCollision();
-
+    let PreviousPlayerY = PlayerY;
     // Ground check
     PlayerOnGround = (PlayerY >= LandingY - 0.01);
 
@@ -125,6 +124,10 @@ function UpdatePlayer()
     {
         Gravity();
     }
+    else 
+    {
+        falling = false;
+    }
 }
 
 /////////////////////////////
@@ -168,6 +171,7 @@ function Gravity()
     let HeightTraversed = PlayerY - FallStartY;
     if(FallSpeed < 8 && HeightTraversed > JumpHeight*2) FallSpeed += GravConstant;
     PlayerY += FallSpeed;
+    falling = true;
 }
 
 /////////////////////////////
