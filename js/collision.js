@@ -65,16 +65,16 @@ function CheckPlatformCollision()
  
     for (let platform of Platforms)
     {
-        if (right < platform.x || left > platform.x + platform.w) continue;        // not above/below this platform
+        if (right < platform.x || left > platform.x + platform.width) continue;        // not above/below this platform
         
-        if (PlayerJump && PlayerY <= platform.y + platform.height)
+        if (PlayerJump && PlayerY <= platform.y + platform.height && PreviousPlayerY > platform.y + platform.height)
         {
             PlayerY = platform.y + platform.height;
             FallStartY = PlayerY;
             PlayerJump = false;
         }
 
-        if(PlayerY + PlayerHeight < platform.y)
+        if(PlayerY + PlayerHeight < platform.y && falling)
         {
             LandingY = platform.y;
         }
