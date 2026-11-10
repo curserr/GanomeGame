@@ -60,9 +60,8 @@ const Rooms = {
         exits: { left: "hall", right: "road" },
         props: BuildProps(1280 * 3, 22),
         music: "AmbientBackground.mp3",
-        enemies: [{ type: "snail", x: 1000 }, { type: "snail", x: 2400 }],
                 platforms: [
-            { type: PlatformTypes.DARK1, size: "small",   x: 300,  y: 560 },     // reachable with one jump
+            { type: PlatformTypes.DARK1, size: "small",   x: 300,  y: 500 },     // reachable with one jump
             { type: PlatformTypes.DARK1, size: "medium1", x: 650,  y: 480 },     // reachable with a double jump
             { type: PlatformTypes.DARK1, size: "big1",    x: 1500, y: 520 }
         ]
