@@ -149,7 +149,7 @@ function StartJump()
 
 function Jump()
 {
-    if (StartY - PlayerY > FallStartY)
+    if (PlayerY > FallStartY)
     {
         PlayerY -= JumpSpeed;
     }
