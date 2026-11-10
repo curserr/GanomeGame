@@ -50,7 +50,8 @@ const Rooms = {
         background: ["#1b1030", "#3a1d5c"],
         exits: { right: "cave" },
         props: BuildProps(1280, 11),
-        npcs: [{ type: "wizard", x: 900 }]
+        npcs: [{ type: "wizard", x: 900 }],
+        Music = false
     },
     cave: {
         name: "Cave (scrolling, 3 screens)",
@@ -58,6 +59,7 @@ const Rooms = {
         background: ["#0d2330", "#1f5666"],
         exits: { left: "hall", right: "road" },
         props: BuildProps(1280 * 3, 22),
+        Music = false,
         enemies: [{ type: "snail", x: 1000 }, { type: "snail", x: 2400 }],
                 platforms: [
             { type: PlatformTypes.DARK1, size: "small",   x: 300,  y: 560 },     // reachable with one jump
@@ -70,6 +72,7 @@ const Rooms = {
         name: "Long road (scrolling, 6 screens)",
         width: 1280 * 6,
         background: ["#2b1a0e", "#7a4a22"],
+        Music = false,
         exits: { left: "cave" },
         props: BuildProps(1280 * 6, 33),
         boss: { type: "guardian", x: 6000 }
@@ -121,7 +124,7 @@ function ChangeRoom(roomName, side)
     PlacePlayerAtEdge(side);
     CloseDialogue();
     LoadRoomEntities();
-     PlayRoomMusic(CurrentRoom); 
+    PlayRoomMusic(CurrentRoom); 
     UpdateCamera(true);
 
     UpdateCamera(true);                       // jump straight to the right view, don't glide in
