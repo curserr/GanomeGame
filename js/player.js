@@ -103,10 +103,12 @@ function UpdatePlayer()
     }
 
     // Jumping: crouch first when on the ground, jump straight away in the air
-    if (CrouchTimer > 0)
+    if (JumpRequested)
     {
-        CrouchTimer--;
+        if(PlayerOnGround) CrouchTimer = CrouchLength;
+    
         if (CrouchTimer === 0) StartJump();
+        else if(CrouchTimer > 0) CrouchTimer--;
     }
     
     JumpRequested = false;
