@@ -42,7 +42,7 @@ let StartY = PlayerY;
 
 const WalkSpeed = 2;                      // units per game step
 let JumpSpeed = 3;
-const JumpHeight = 150;
+const JumpHeight = 200;
 let FallSpeed = 2;
 const GravConstant = 0.07;
 
