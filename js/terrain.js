@@ -7,13 +7,13 @@
 // =====================================================================
 
 let Stars = [];
-const PlatformDimensions = {
-    small:   { width: 298,  height: 46 },
-    medium1: { width: 518,  height: 45 },
-    medium2: { width: 468,  height: 46 },
-    big1:    { width: 893,  height: 48 },
-    big2:    { width: 620,  height: 52 },
-    large:   { width: 1053, height: 47 }
+constPlatformDimensions = {
+    small:   { width: 311, height: 54 },
+    medium1: { width: 516, height: 56 },
+    medium2: { width: 457, height: 65 },
+    big1:    { width: 732, height: 66 },
+    big2:    { width: 685, height: 67 },
+    large:   { width: 852, height: 66 }
 };
 
   const PlatformTypes = 
@@ -34,17 +34,18 @@ SheetImgDarkPlatforms.src = "DarkPlatforms.png";
 const PlatformSheets = {};
 PlatformSheets[PlatformTypes.DARK1] = {      // or whichever type name you want for these
     image: SheetImgDarkPlatforms,            // new Image() with src "FlatPlatforms.png"
-    cellW: 1080,
-    cellH: 72,
-    pieces: {
-        small:   { col: 0, row: 0, x: 391, y: 13 },
-        medium1: { col: 1, row: 0, x: 281, y: 13 },
-        medium2: { col: 0, row: 1, x: 306, y: 13 },
-        big1:    { col: 1, row: 1, x: 93,  y: 12 },
-        big2:    { col: 0, row: 2, x: 230, y: 10 },
-        large:   { col: 1, row: 2, x: 13,  y: 12 }
+    cellW: 880,
+    cellH: 92,
+    pieces: 
+    {
+    small:   { col: 0, row: 0, x: 284, y: 19 },
+    medium1: { col: 1, row: 0, x: 182, y: 18 },
+    medium2: { col: 0, row: 1, x: 211, y: 13 },
+    big1:    { col: 1, row: 1, x: 74,  y: 13 },
+    big2:    { col: 0, row: 2, x: 97,  y: 12 },
+    large:   { col: 1, row: 2, x: 14,  y: 13 }
     }
-};
+}
 
 const PlatformSurfaceInset = 4;               // units from the top of the picture to the surface the feet stand on
  
