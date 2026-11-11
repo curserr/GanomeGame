@@ -8,12 +8,12 @@
 
 let Stars = [];
 const PlatformDimensions = {
-    small: { width: 317,height: 155},
-    medium1: {width: 616,height: 167},
-    medium2: {width: 523,height: 169},
-    big1: {width: 1031,height: 183 },
-    big2: {width: 722,height: 204},
-    large: {width: 1255,height: 207 }
+    small:   { width: 298,  height: 46 },
+    medium1: { width: 518,  height: 45 },
+    medium2: { width: 468,  height: 46 },
+    big1:    { width: 893,  height: 48 },
+    big2:    { width: 620,  height: 52 },
+    large:   { width: 1053, height: 47 }
 };
 
   const PlatformTypes = 
@@ -32,17 +32,17 @@ SheetImgDarkPlatforms.src = "DarkPlatforms.png";
 // Where each piece sits inside the platform sprite sheet (2 columns x 3 rows, every cell 1272 x 224).
 // col/row = which cell, x/y = where the piece starts inside that cell. The piece sizes are in PlatformDimensions.
 const PlatformSheets = {};
-PlatformSheets[PlatformTypes.DARK1] = {
-    image: SheetImgDarkPlatforms,
-    cellW: 1272,
-    cellH: 224,
+PlatformSheets[PlatformTypes.DARK1] = {      // or whichever type name you want for these
+    image: SheetImgDarkPlatforms,            // new Image() with src "FlatPlatforms.png"
+    cellW: 1080,
+    cellH: 72,
     pieces: {
-        small:   { col: 0, row: 0, x: 477, y: 8 },
-        medium1: { col: 1, row: 0, x: 328, y: 8 },
-        medium2: { col: 0, row: 1, x: 374, y: 8 },
-        big1:    { col: 1, row: 1, x: 120, y: 8 },
-        big2:    { col: 0, row: 2, x: 275, y: 8 },
-        large:   { col: 1, row: 2, x: 8,   y: 8 }
+        small:   { col: 0, row: 0, x: 391, y: 13 },
+        medium1: { col: 1, row: 0, x: 281, y: 13 },
+        medium2: { col: 0, row: 1, x: 306, y: 13 },
+        big1:    { col: 1, row: 1, x: 93,  y: 12 },
+        big2:    { col: 0, row: 2, x: 230, y: 10 },
+        large:   { col: 1, row: 2, x: 13,  y: 12 }
     }
 };
 
