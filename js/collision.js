@@ -67,6 +67,8 @@ function CheckPlatformCollision()
     {
         if (right < platform.x || left > platform.x + platform.width) continue;        // not above/below this platform
         
+
+        // if the player is below the platform, he bumps his head
         if (PlayerJump && PlayerY <= platform.surface + platform.height && PreviousPlayerY > platform.surface + platform.height)
         {
             PlayerY = platform.surface + platform.height;
@@ -74,7 +76,8 @@ function CheckPlatformCollision()
             PlayerJump = false;
         }
 
-        if(PlayerY + PlayerHeight < platform.surface && falling)
+        // if the player is above, he lands on the platform
+        if(PlayerY + PlayerHeight < platform.surface)
         {
             LandingY = platform.surface - PlayerHeight;
         }
