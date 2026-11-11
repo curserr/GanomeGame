@@ -47,7 +47,7 @@ PlatformSheets[PlatformTypes.DARK1] = {      // or whichever type name you want 
     }
 }
 
-const PlatformSurfaceInset = 4;               // units from the top of the picture to the surface the feet stand on
+const PlatformSurfaceInset = 6;               // units from the top of the picture to the surface the feet stand on
  
 let Platforms = [];   
 
@@ -186,6 +186,8 @@ function DrawPlatforms()
         if (!platform.image.complete || platform.image.naturalWidth === 0) continue;              // picture not loaded yet
  
         ctx.drawImage(platform.image, platform.sx, platform.sy, platform.sw, platform.sh, platform.x, platform.y, platform.width, platform.height);
+        ctx.fillStyle = "red";
+        ctx.fillRect(platform.x, platform.y + platform.height, platform.width, 2);
     }
 }
 
