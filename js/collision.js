@@ -68,7 +68,7 @@ function CheckPlatformCollision()
         // if the player is not on a platform 
         if (right < platform.x || left > platform.x + platform.width)
         {
-            LandingY = FloorY;
+            LandingY = FloorY - PlayerHeight;
             continue;        // not above/below this platform
         } 
 
