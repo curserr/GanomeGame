@@ -6,6 +6,8 @@
 //  Platform images will be drawn from here later.
 // =====================================================================
 
+const FloorY = 600;
+
 let Stars = [];
 const PlatformDimensions = {
     small:   { width: 311, height: 54 },
