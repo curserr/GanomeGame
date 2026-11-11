@@ -62,18 +62,15 @@ function CheckPlatformCollision()
 {
     let left  = PlayerX + 14;                 // only his feet count, not his whole width
     let right = PlayerX + PlayerWidth - 14;
- 
-    // if the player fell from the platform 
-    if()
 
     for (let platform of Platforms)
     {
+        // if the player is not on a platform 
         if (right < platform.x || left > platform.x + platform.width)
         {
             LandingY = StartY;
             continue;        // not above/below this platform
         } 
-        
 
         // if the player is below the platform, he bumps his head
         if (PlayerJump && PlayerY <= platform.surface + platform.height && PreviousPlayerY > platform.surface + platform.height)
