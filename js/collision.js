@@ -78,7 +78,7 @@ function CheckPlatformCollision()
         
 
         // if the player is above, he lands on the platform
-        if(PlayerY + PlayerHeight < platform.surface)
+        if (PlayerY > PreviousPlayerY && PreviousPlayerY + PlayerHeight <= platform.surface && PlayerY + PlayerHeight >= platform.surface)
         {
             LandingY = platform.surface - PlayerHeight;
         }
