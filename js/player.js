@@ -37,7 +37,7 @@ let SheetImg = null;
 // ---------- State ----------
 let PlayerX = 200;                        // position inside the CURRENT ROOM, from its left edge
 let PlayerY = 600;                        
-let StartY;                          
+let StartY = PlayerY;                          
 
 
 const WalkSpeed = 2;                      // units per game step
@@ -83,7 +83,7 @@ function UpdatePlayer()
     PreviousPlayerY = PlayerY;
     // Ground check
     PlayerOnGround = (PlayerY >= LandingY - 0.01);
-    if(PlayerOnGround) StartY = PlayerY;
+
     // Horizontal movement and facing direction
     PlayerMove = false;
 
