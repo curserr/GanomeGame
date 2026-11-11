@@ -55,7 +55,7 @@ function ApplySave()
     ChangeRoom(Save.room);                    // first the room, so we know how wide it is
 
     let x = Number.isFinite(Save.x) ? Math.min(Math.max(Save.x, 0), 1) : 0;
-    PlayerX = Math.min(x * CurrentRoom.width, CurrentRoom.width - PlayerW);
+    PlayerX = Math.min(x * CurrentRoom.width, CurrentRoom.width - PlayerWidth);
 
     ResetPlayerMotion();
     UpdateCamera(true);
