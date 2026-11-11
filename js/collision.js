@@ -55,8 +55,8 @@ function TouchesPlayer(rect)
 function CheckPlatformCollision()
 {
     PlayerHitbox = PlayerRect();
-    let right = PlayerHitBox.x + PlayerHitBox.w;
-    let left = PlayerHitBox.x;
+    let right = PlayerHitbox.x + PlayerHitbox.w;
+    let left = PlayerHitbox.x;
 
     for (let platform of Platforms)
     {
