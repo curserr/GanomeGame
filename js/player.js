@@ -1,327 +1,116 @@
 // =====================================================================
-//  player.js  -  the player: movement, jumping, sprite animation, drawing
+//  collision.js  -  everything that decides where things are ALLOWED to be
 //
-//  All positions are in world units, measured from the left edge of the CURRENT ROOM.
-//  Per game step the order is (see main.js):
-//     UpdatePlayer()  ->  ResolveCollisions() [collision.js]  ->  AnimatePlayer()
+//  - the floor
+//  - the edges of the room (and the doors to the next room)
+//  - rectangle overlap tests, used by enemies, bosses and NPCs
+//
+//  Later, platforms and walls go here too.
 // =====================================================================
 
-// ---------- Sprite sheet ----------
-const SheetCols = 5;
-const SheetRows = 3;
-const FrameW = 224;                       // one frame of the sheet, in sheet pixels
-const FrameH = 304;
-
-const PlayerWidth = 64;                       // size of the player in units
-const PlayerHeight = PlayerWidth * FrameH / FrameW;
-
-// Frame numbers count left to right, top to bottom (0 to 14)
-//   row 1: 0  1  2  3  4
-//   row 2: 5  6  7  8  9
-//   row 3: 10 11 12 13 14
-const IdleFrame    = 0;                   // standing still
-const WalkFrames   = [1, 2, 3, 4, 5];     // walk cycle
-const CrouchFrame  = 6;                   // right before leaving the ground
-const RiseFrames   = [7, 8];              // going up (first half, second half)
-const FallFrames   = [11, 12, 13, 14];    // the tumble poses
-const SpinStart    = 0.6;                 // fraction of the drop spent stepping through the poses once;
-                                          // after that they loop until landing
-
-const AnimDelay = 6;          // game steps per animation frame (bigger = slower)
-const CrouchLength = 5;       // game steps spent crouching before a ground jump
-let falling = false;
-let PreviousPlayerY;
-
-let SheetImg = null;
-
-// ---------- State ----------
-let PlayerX = 200;                        // position inside the CURRENT ROOM, from its left edge
-let PlayerY = 600;                        
-let StartY = PlayerY;                          
+const PlayerDimensions = {
+    width: 224,
+    height: 304
+};
 
 
-const WalkSpeed = 2;                      // units per game step
-let JumpSpeed = 3;
-const JumpHeight = 200;
-let FallSpeed = 2;
-const GravConstant = 0.07;
 
-let PlayerJump = false;      // true while rising
-let PlayerOnGround = true;
-let PlayerMove = false;      // true while an arrow key is moving the character
-let LeftPlayer = false;      // true = facing left
-let LandingY = StartY;
-let FallStartY = StartY - JumpHeight;     // where the fall began (the top of the jump)
-
-let AnimTimer = 0;
-let AnimIndex = 0;
-let CrouchTimer = 0;          // counts down while crouching
-let Spinning = false;         // true once the fall has reached the looping spin
-let StateName = "idle";       // only used by the debug text
-let CurrentFrame = 0;         // the sprite frame that gets drawn
-
-let HurtTimer = 0;            // steps of "can't be hurt again" after a hit
-let HitsTaken = 0;
-
-function InitPlayer()
+function InitCollision()
 {
-    SheetImg = new Image();
-    SheetImg.src = "gnome_sheet_v2.png";
-
-    PlayerX = 200;
-    PlayerY = StartY;
-    StartY = PlayerY;
+    FloorY = StartY + PlayerHeight;
 }
 
 /////////////////////////////
 ///
 ////////////////////////////
 
-// ---------- Moving ----------
-function UpdatePlayer()
+// The player's box. It is a little narrower than the picture so touching feels fair.
+function PlayerRect()
 {
-    PreviousPlayerY = PlayerY;
-    // Ground check
-    PlayerOnGround = (PlayerY >= LandingY - 0.01);
-
-    // Horizontal movement and facing direction
-    PlayerMove = false;
-
-    if (keys["arrowleft"])
-    {
-        LeftPlayer = true;
-        PlayerMove = true;
-        PlayerX -= WalkSpeed;
-    }
-
-    if (keys["arrowright"])
-    {
-        LeftPlayer = false;
-        PlayerMove = true;
-        PlayerX += WalkSpeed;
-    }
-
-    // Jumping: crouch first when on the ground, jump straight away in the air
-    
-    if(CrouchTimer > 0)
-    {
-        CrouchTimer--;
-        if(CrouchTimer === 0 ) StartJump();
-    } 
-
-    if (JumpRequested)
-    {
-        if(PlayerOnGround) CrouchTimer = CrouchLength;    
-    }
-    
-    JumpRequested = false;
-
-    // Rising or falling
-    if (PlayerJump)
-    {
-        Jump();
-    }
-    else if (PlayerY < LandingY)
-    {
-        Gravity();
-    }
-    else 
-    {
-        falling = false;
-    }
+    return { x: PlayerX + 10, y: PlayerY + 6, w: PlayerWidth - 20, h: PlayerHeight - 6 };
 }
 
 /////////////////////////////
 ///
 ////////////////////////////
 
-function StartJump()
+function RectsOverlap(a, b)
 {
-    // Reset all variables that change during a jump, so that each jump starts in the same manner
-    PlayerJump = true;
-    StartY = PlayerY;
-    AnimIndex = 0;       // so the fall tumble starts from its first frame
-    AnimTimer = 0;
-    FallSpeed = 2;
-    FallStartY = StartY - JumpHeight;
+    return a.x < b.x + b.w && a.x + a.w > b.x &&
+           a.y < b.y + b.h && a.y + a.h > b.y;
 }
-
 
 /////////////////////////////
 ///
 ////////////////////////////
 
-function Jump()
+function TouchesPlayer(rect)
 {
-    if (PlayerY > FallStartY)
+    return RectsOverlap(PlayerRect(), rect);
+}
+
+/////////////////////////////
+///
+////////////////////////////
+
+// Finds the surface under the player: the floor, or the highest platform that is under his feet.
+// Platforms are ONE-WAY: he can jump up through them and land on top.
+// A platform only counts if his feet were above its surface at the START of the step (prevFeetY);
+// that is what lets him rise through it from below, and stops him tunnelling through it when falling.
+function CheckPlatformCollision()
+{
+    let left  = PlayerX;                 // only his feet count, not his whole width
+    let right = PlayerX + PlayerWidth;
+
+    for (let platform of Platforms)
     {
-        PlayerY -= JumpSpeed;
+        // if the player is not on a platform 
+        if (right < platform.x || left > platform.x + platform.width)
+        {
+            LandingY = FloorY - PlayerHeight;
+            continue;        // not above/below this platform
+        } 
+
+        // if the player is below the platform, he bumps his head
+        if (PlayerJump && PlayerY <= platform.surface + platform.height && PreviousPlayerY > platform.surface + platform.height)
+        {
+            PlayerY = platform.y + platform.height;
+            FallStartY = PlayerY;
+            PlayerJump = false;
+        }
+        // if the player is on the side, he bumps his body on the side of the platform
+        
+
+        // if the player is above, he lands on the platform
+        if(PlayerY + PlayerHeight < platform.surface)
+        {
+            LandingY = platform.surface - PlayerHeight;
+        }
     }
-    else
-    {
-        PlayerJump = false;
-        FallStartY = PlayerY;
-    }
 }
 
 /////////////////////////////
 ///
 ////////////////////////////
-
-function Gravity()
+ 
+// Called once per game step, after the player has moved
+function ResolveCollisions()
 {
-    let HeightTraversed = PlayerY - FallStartY;
-    if(FallSpeed < 8 && HeightTraversed > JumpHeight*2) FallSpeed += GravConstant;
-    PlayerY += FallSpeed;
-    falling = true;
-}
+    // Walking off the edge of the ROOM goes to the neighbouring room
+    let maxX = CurrentRoom.width - PlayerWidth;
+    if (PlayerX > maxX && CurrentRoom.exits.right) ChangeRoom(CurrentRoom.exits.right, "left");
+    else if (PlayerX < 0 && CurrentRoom.exits.left) ChangeRoom(CurrentRoom.exits.left, "right");
 
-/////////////////////////////
-///
-////////////////////////////
-
-// ---------- Hooks used by other files ----------
-
-// Puts the player at an edge of the room he just entered ("left" or "right"). Anything else: keep the position.
-function PlacePlayerAtEdge(side)
-{
-    if (side === "left")  PlayerX = 0;
-    if (side === "right") PlayerX = CurrentRoom.width - PlayerWidth;
-}
-
-/////////////////////////////
-///
-////////////////////////////
-
-// Stops every jump / animation state (used when loading a save)
-function ResetPlayerMotion()
-{
-    PlayerY = StartY;                      // always put him back on the ground
-    PlayerJump = false;
-    JumpsUsed = 0;
-    CrouchTimer = 0;
-    JumpRequested = false;
-    InteractRequested = false;
-    Spinning = false;
-    HurtTimer = 0;
-    FallStartY = StartY - JumpHeight;
-}
-
-// An enemy or boss touched the player: knock him away from it. sourceX is the enemy's centre.
-function HurtPlayer(sourceX)
-{
-    if (HurtTimer > 0) return;
-
-    HurtTimer = 60;
-    HitsTaken++;
-
-    let away = (PlayerX + PlayerWidth / 2 < sourceX) ? -1 : 1;
-    PlayerX += away * 80;
+    // Keep the player inside the room
     PlayerX = Math.max(0, Math.min(PlayerX, CurrentRoom.width - PlayerWidth));
-}
+    PlayerY = Math.max(0, Math.min(PlayerY, RoomHeight() - PlayerHeight));
 
-// While a dialogue is open the player just stands there
-function FreezePlayer()
-{
-    PlayerMove = false;
-    AnimatePlayer();
-}
-
-// ---------- Animation ----------
-
-// Steps through a list of frames at the animation speed and returns the current one
-function Animate(list)
-{
-    AnimTimer++;
-    if (AnimTimer >= AnimDelay)
+    // Land on the surface if the player has fallen through it
+    if (PlayerY > LandingY)
     {
-        AnimTimer = 0;
-        AnimIndex = (AnimIndex + 1) % list.length;
+        PlayerY = LandingY;
     }
-    return list[AnimIndex % list.length];
-}
-
-// Picks the sprite frame for this step (DrawPlayer() uses it)
-function AnimatePlayer()
-{
-    CurrentFrame = ChooseFrame();
-}
-
-function ChooseFrame()
-{
-    // 1. Crouching just before a jump
-    if (CrouchTimer > 0) { StateName = "crouch"; return CrouchFrame; }
-
-    // 2. In the air
-    if (!PlayerOnGround)
-    {
-        if (PlayerJump)
-        {
-            // Going up: first half of the rise uses one frame, second half the other
-            StateName = "rising";
-            let risen = StartY - PlayerY;
-            return (risen < JumpHeight / 2) ? RiseFrames[0] : RiseFrames[1];
-        }
-
-        // Coming down. Progress is how far down he has dropped (0 at the top, 1 at the ground).
-        let total = LandingY - FallStartY;
-        let progress = (total > 0) ? (PlayerY - FallStartY) / total : 1;
-        progress = Math.max(0, Math.min(1, progress));
-
-
-        // First part: step through all the tumble poses once, ending on the last one
-        if (progress < SpinStart)
-        {
-            StateName = "tumble steps";
-            Spinning = false;
-            let index = Math.floor(progress / SpinStart * FallFrames.length);
-            return FallFrames[Math.min(index, FallFrames.length - 1)];
-        }
-
-        // Rest of the drop: keep cycling through the poses, continuing from the last one
-        if (!Spinning)
-        {
-            Spinning = true;
-            AnimIndex = FallFrames.length - 1;
-            AnimTimer = 0;
-        }
-        StateName = "spinning";
-        return Animate(FallFrames);
-    }
-
-    // 3. On the ground
-    if (PlayerMove) { StateName = "walking"; return Animate(WalkFrames); }
-
-    StateName = "idle";
-    AnimIndex = 0;
-    AnimTimer = 0;
-    return IdleFrame;
-}
-
-// ---------- Drawing ----------
-function DrawPlayer()
-{
-    if (!SheetImg.complete || SheetImg.naturalWidth === 0) return;     // sheet not loaded yet
-
-    UseWorldSpace(1);
-
-    let col = CurrentFrame % SheetCols;
-    let row = Math.floor(CurrentFrame / SheetCols);
-
-    ctx.save();
-
-    // Blink while recovering from a hit
-    if (HurtTimer > 0 && Math.floor(HurtTimer / 5) % 2 === 0) ctx.globalAlpha = 0.4;
-
-    if (LeftPlayer)
-    {
-        ctx.translate(PlayerX + PlayerWidth, PlayerY);
-        ctx.scale(-1, 1);                    // mirror to face left
-    }
-    else
-    {
-        ctx.translate(PlayerX, PlayerY);
-    }
-    ctx.drawImage(SheetImg, col * FrameW, row * FrameH, FrameW, FrameH, 0, 0, PlayerWidth, PlayerHeight);
-    ctx.restore();
+    
+    // Update the ground state
+    PlayerOnGround = (PlayerY >= LandingY - 0.01);
 }
