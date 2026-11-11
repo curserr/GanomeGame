@@ -7,7 +7,7 @@
 // =====================================================================
 
 let Stars = [];
-constPlatformDimensions = {
+const PlatformDimensions = {
     small:   { width: 311, height: 54 },
     medium1: { width: 516, height: 56 },
     medium2: { width: 457, height: 65 },
