@@ -37,12 +37,12 @@ let SheetImg = null;
 // ---------- State ----------
 let PlayerX = 200;                        // position inside the CURRENT ROOM, from its left edge
 let PlayerY = 600;                        
-let StartY = PlayerY;                           
+let StartY;                          
 
 
 const WalkSpeed = 2;                      // units per game step
 let JumpSpeed = 3;
-const JumpHeight = 250;
+const JumpHeight = 150;
 let FallSpeed = 2;
 const GravConstant = 0.07;
 
@@ -80,6 +80,7 @@ function InitPlayer()
 // ---------- Moving ----------
 function UpdatePlayer()
 {
+    if(PlayerOnGround) StartY = PlayerY;
     PreviousPlayerY = PlayerY;
     // Ground check
     PlayerOnGround = (PlayerY >= LandingY - 0.01);
@@ -146,6 +147,7 @@ function StartJump()
     FallStartY = StartY - JumpHeight;
 }
 
+
 /////////////////////////////
 ///
 ////////////////////////////
@@ -189,7 +191,7 @@ function PlacePlayerAtEdge(side)
 }
 
 /////////////////////////////
-////
+///
 ////////////////////////////
 
 // Stops every jump / animation state (used when loading a save)
