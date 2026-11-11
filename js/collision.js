@@ -8,13 +8,12 @@
 //  Later, platforms and walls go here too.
 // =====================================================================
 
-let FloorY;                                   // the line his feet are on
 const PlayerDimensions = {
     width: 224,
     height: 304
 };
 
-
+let PlayerHitbox;
 
 function InitCollision()
 {
@@ -60,8 +59,9 @@ function TouchesPlayer(rect)
 // that is what lets him rise through it from below, and stops him tunnelling through it when falling.
 function CheckPlatformCollision()
 {
-    let left  = PlayerX + 14;                 // only his feet count, not his whole width
-    let right = PlayerX + PlayerWidth - 14;
+    PlayerHitbox = PlayerRect();
+    let right = PlayerHitbox.x + PlayerHitBox.w;
+    let left = PlayerHitBox.x;
 
     for (let platform of Platforms)
     {
@@ -79,6 +79,8 @@ function CheckPlatformCollision()
             FallStartY = PlayerY;
             PlayerJump = false;
         }
+        // if the player is on the side, he bumps his body on the side of the platform
+        
 
         // if the player is above, he lands on the platform
         if(PlayerY + PlayerHeight < platform.surface)
