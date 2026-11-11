@@ -8,6 +8,11 @@
 //  Later, platforms and walls go here too.
 // =====================================================================
 
+const PlayerDimensions = {
+    width: 224,
+    height: 304
+};
+
 let PlayerHitbox;
 
 function InitCollision()
