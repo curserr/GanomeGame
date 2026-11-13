@@ -62,8 +62,8 @@ const Rooms = {
         music: "AmbientBackground1.mp3",
                 platforms: [
             { type: PlatformTypes.DARK1, size: "small",   x: 300,  y: 500, width:317, height: 155  },     // reachable with one jump
-            { type: PlatformTypes.DARK1, size: "medium1", x: 650,  y: 480, width:616, height:167 },     // reachable with a double jump
-            { type: PlatformTypes.DARK1, size: "big1",    x: 1500, y: 520, width:1031, height:183 }
+            { type: PlatformTypes.GARDEN, size: "medium1", x: 650,  y: 480, width:616, height:167 },     // reachable with a double jump
+            { type: PlatformTypes.GARDEN, size: "big1",    x: 1500, y: 520, width:1031, height:183 }
         ]
 
     },
