@@ -51,7 +51,7 @@ PlatformSheets[PlatformTypes.DARK1] = {      // or whichever type name you want 
     }
 }
 
-PlatformSheets[PlatformTypes.GRASS] = {
+PlatformSheets[PlatformTypes.GARDEN] = {
     image: SheetImgGrass, cellW: 1074, cellH: 150,
     inset: 16,
     pieces: {
