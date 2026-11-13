@@ -57,18 +57,18 @@ function CheckPlatformCollision()
     PlayerHitbox = PlayerRect();
     let right = PlayerHitbox.x + PlayerHitbox.w;
     let left = PlayerHitbox.x;
+    LandingY = FloorY - PlayerHeight;
 
     for (let platform of Platforms)
     {
         // if the player is not on a platform 
         if (right < platform.x || left > platform.x + platform.width)
         {
-            LandingY = FloorY - PlayerHeight;
             continue;        // not above/below this platform
         } 
 
         // if the player is below the platform, he bumps his head
-        if (PlayerJump && PlayerY <= platform.surface + platform.height && PreviousPlayerY > platform.surface + platform.height)
+        if (PlayerJump && PlayerY <= platform.y + platform.height && PreviousPlayerY > platform.y + platform.height)
         {
             PlayerY = platform.y + platform.height;
             FallStartY = PlayerY;
@@ -78,7 +78,7 @@ function CheckPlatformCollision()
         
 
         // if the player is above, he lands on the platform
-        if (PlayerY > PreviousPlayerY && PreviousPlayerY + PlayerHeight <= platform.surface && PlayerY + PlayerHeight >= platform.surface)
+        if (PreviousPlayerY + PlayerHeight <= platform.surface + 0.01 && platform.surface < LandingY)
         {
             LandingY = platform.surface - PlayerHeight;
         }
