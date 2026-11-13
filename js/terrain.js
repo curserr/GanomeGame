@@ -31,7 +31,7 @@ const SheetImgDarkPlatforms = new Image();
 SheetImgDarkPlatforms.src = "DarkPlatforms.png";
 
 const SheetImgGarden = new Image();
-SheetImgGarden = "GardenPlatforms.png";
+SheetImgGarden.src = "GardenPlatforms.png";
 
 // Where each piece sits inside the platform sprite sheet (2 columns x 3 rows, every cell 1272 x 224).
 // col/row = which cell, x/y = where the piece starts inside that cell. The piece sizes are in PlatformDimensions.
