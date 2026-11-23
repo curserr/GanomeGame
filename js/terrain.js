@@ -55,12 +55,12 @@ PlatformSheets[PlatformTypes.GARDEN] = {
     image: SheetImgGarden, cellW: 1074, cellH: 150,
     inset: 16,
     pieces: {
-        small:   { col: 0, row: 0, x: 337, y: 31},
-        medium1: { col: 1, row: 0, x: 224, y: 24},
-        medium2: { col: 0, row: 1, x: 240, y: 18},
-        big1:    { col: 1, row: 1, x: 82,  y: 20},
-        big2:    { col: 0, row: 2, x: 106, y: 12},
-        large:   { col: 1, row: 2, x: 12,  y: 15}
+        small:   { col: 0, row: 0, x: 337, y: 31, w: 399,  h: 88 },
+        medium1: { col: 1, row: 0, x: 224, y: 24, w: 626,  h: 102 },
+        medium2: { col: 0, row: 1, x: 240, y: 18, w: 593,  h: 113 },
+        big1:    { col: 1, row: 1, x: 82,  y: 20, w: 910,  h: 109 },
+        big2:    { col: 0, row: 2, x: 106, y: 12, w: 862,  h: 126 },
+        large:   { col: 1, row: 2, x: 12,  y: 15, w: 1049, h: 120 }
     }
 };
 
@@ -90,7 +90,8 @@ function LoadPlatforms(room)
         let sheet = PlatformSheets[spec.type];
         let size  = spec.size || "medium1";
         let piece = sheet && sheet.pieces[size];
-        let dim   = PlatformDimensions[size];
+        // a piece can carry its own size (w, h); otherwise the shared PlatformDimensions table is used
+        let dim   = (piece && piece.w) ? { width: piece.w, height: piece.h } : PlatformDimensions[size];
  
         if (!piece || !dim) { console.warn("Unknown platform:", spec); continue; }
  
@@ -105,7 +106,7 @@ function LoadPlatforms(room)
             y: spec.y,
             width: dim.width * scale,
             height: dim.height * scale,
-            surface: spec.y + PlatformSurfaceInset * scale      // the line the player's feet rest on
+            surface: spec.y + (sheet.inset ?? PlatformSurfaceInset) * scale      // the line the player's feet rest on
         });
     }
 }
