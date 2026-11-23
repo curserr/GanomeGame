@@ -65,6 +65,23 @@ PlatformSheets[PlatformTypes.GARDEN] = {
 };
 
 
+// Checks every sheet picture against the numbers above. If a picture is the wrong file (or an old copy
+// the browser kept), platforms come out invisible or cut in half; this prints the reason in the console (F12).
+for (let type in PlatformSheets)
+{
+    let sheet = PlatformSheets[type];
+    sheet.image.addEventListener("load", function() {
+        let wantW = 2 * sheet.cellW, wantH = 3 * sheet.cellH;
+        if (sheet.image.naturalWidth !== wantW || sheet.image.naturalHeight !== wantH)
+            console.warn("Platform sheet '" + type + "': " + sheet.image.src.split("/").pop() + " is " +
+                sheet.image.naturalWidth + "x" + sheet.image.naturalHeight + " but the numbers expect " +
+                wantW + "x" + wantH + ". Wrong file, or an old cached copy.");
+    });
+    sheet.image.addEventListener("error", function() {
+        console.warn("Platform sheet '" + type + "': the picture " + sheet.image.src.split("/").pop() + " was not found.");
+    });
+}
+
 const PlatformSurfaceInset = 6;               // units from the top of the picture to the surface the feet stand on
  
 let Platforms = [];   
