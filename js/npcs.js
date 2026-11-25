@@ -6,11 +6,14 @@
 //  Stand next to one and press E to talk.
 // =====================================================================
 
+const OldGnomeImage = new Image();
+OldGnome.src = "OldGnome.png";
+
 const NpcTypes = {
-    wizard: {
-        emoji: "🧙",
+    oldGnome: {
+        image: OldGnomeImage,
         size: 70,
-        name: "Old Wizard",
+        name: "Old OldGnome",
         dialogue: "wizardHello"
     }
 };
@@ -94,10 +97,17 @@ function DrawNpcs()
     {
         if (n.x < CameraX - 150 || n.x > CameraX + ViewW + 150) continue;     // off screen: skip
 
-        ctx.font = n.def.size + "px serif";
-        ctx.fillStyle = "white";
-        ctx.fillText(n.def.emoji, n.x, FloorY);
-
+        if (n.def.image)
+    {
+        if (n.def.image.complete && n.def.image.naturalWidth > 0)
+            ctx.drawImage(n.def.image, n.x - n.def.size / 2, FloorY - n.def.size, n.def.size, n.def.size);
+    }
+    else
+    {
+    ctx.font = n.def.size + "px serif";
+    ctx.fillStyle = "white";
+    ctx.fillText(n.def.emoji, n.x, FloorY);
+    }
         // a little "E" bubble above the NPC you can talk to
         if (n === NearNpc)
         {
