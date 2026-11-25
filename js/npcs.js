@@ -10,7 +10,7 @@ const OldGnomeImage = new Image();
 OldGnomeImage.src = "OldGnome.png";
 
 const NpcTypes = {
-    oldGnome: {
+    OldGnome: {
         image: OldGnomeImage,
         size: 70,
         name: "Old OldGnome",
