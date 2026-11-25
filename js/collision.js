@@ -61,6 +61,18 @@ function CheckPlatformCollision()
 
     for (let platform of Platforms)
     {
+        let prevLeft = PreviousPlayerX + 10;
+        let prevRight = PreviousPlayerX + PlayerWidth - 10;
+        if (PlayerHitbox.y + PlayerHitbox.h > platform.surface &&
+            PlayerHitbox.y < platform.y + platform.height)
+        {
+            if (prevRight <= platform.x && right > platform.x)
+                PlayerX = platform.x - (PlayerWidth - 10);
+            else if (prevLeft >= platform.x + platform.width && left < platform.x + platform.width)
+                PlayerX = platform.x + platform.width - 10;
+        }   
+
+
         // if the player is not on a platform 
         if (right < platform.x || left > platform.x + platform.width)
         {
@@ -83,16 +95,7 @@ function CheckPlatformCollision()
             LandingY = platform.surface - PlayerHeight;
         }
 
-        let playerBottom = PlayerHitbox.y + PlayerHitbox.h;
-    let platformBottom = platform.y + platform.height;
 
-    if (playerBottom > platform.y && PlayerHitbox.y < platformBottom)
-    {
-        if (PreviousPlayerX + PlayerWidth <= platform.x)
-            PlayerX = platform.x - PlayerWidth;
-        else if (PreviousPlayerX >= platform.x + platform.width)
-            PlayerX = platform.x + platform.width;
-}
     }
 }
 
