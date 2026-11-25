@@ -55,32 +55,15 @@ PlatformSheets[PlatformTypes.GARDEN] = {
     image: SheetImgGarden, cellW: 1074, cellH: 150,
     inset: 16,
     pieces: {
-        small:   { col: 0, row: 0, x: 337, y: 31, w: 399,  h: 88 },
-        medium1: { col: 1, row: 0, x: 224, y: 24, w: 626,  h: 102 },
-        medium2: { col: 0, row: 1, x: 240, y: 18, w: 593,  h: 113 },
-        big1:    { col: 1, row: 1, x: 82,  y: 20, w: 910,  h: 109 },
-        big2:    { col: 0, row: 2, x: 106, y: 12, w: 862,  h: 126 },
-        large:   { col: 1, row: 2, x: 12,  y: 15, w: 1049, h: 120 }
+        small:   { col: 0, row: 0, x: 337, y: 31},
+        medium1: { col: 1, row: 0, x: 224, y: 24},
+        medium2: { col: 0, row: 1, x: 240, y: 18},
+        big1:    { col: 1, row: 1, x: 82,  y: 20},
+        big2:    { col: 0, row: 2, x: 106, y: 12},
+        large:   { col: 1, row: 2, x: 12,  y: 15}
     }
 };
 
-
-// Checks every sheet picture against the numbers above. If a picture is the wrong file (or an old copy
-// the browser kept), platforms come out invisible or cut in half; this prints the reason in the console (F12).
-for (let type in PlatformSheets)
-{
-    let sheet = PlatformSheets[type];
-    sheet.image.addEventListener("load", function() {
-        let wantW = 2 * sheet.cellW, wantH = 3 * sheet.cellH;
-        if (sheet.image.naturalWidth !== wantW || sheet.image.naturalHeight !== wantH)
-            console.warn("Platform sheet '" + type + "': " + sheet.image.src.split("/").pop() + " is " +
-                sheet.image.naturalWidth + "x" + sheet.image.naturalHeight + " but the numbers expect " +
-                wantW + "x" + wantH + ". Wrong file, or an old cached copy.");
-    });
-    sheet.image.addEventListener("error", function() {
-        console.warn("Platform sheet '" + type + "': the picture " + sheet.image.src.split("/").pop() + " was not found.");
-    });
-}
 
 const PlatformSurfaceInset = 6;               // units from the top of the picture to the surface the feet stand on
  
@@ -107,14 +90,15 @@ function LoadPlatforms(room)
         let sheet = PlatformSheets[spec.type];
         let size  = spec.size || "medium1";
         let piece = sheet && sheet.pieces[size];
-        // a piece can carry its own size (w, h); otherwise the shared PlatformDimensions table is used
-        let dim   = (piece && piece.w) ? { width: piece.w, height: piece.h } : PlatformDimensions[size];
+        let dim   = PlatformDimensions[size];
  
         if (!piece || !dim) { console.warn("Unknown platform:", spec); continue; }
  
         let scale = spec.scale || 1;
         Platforms.push({
             image: sheet.image,
+            sheetW: (sheet.cols || 2) * sheet.cellW,
+            sheetH: (sheet.rows || 3) * sheet.cellH,
             sx: piece.col * sheet.cellW + piece.x,       // the piece's rectangle inside the sheet
             sy: piece.row * sheet.cellH + piece.y,
             sw: dim.width,
@@ -123,7 +107,7 @@ function LoadPlatforms(room)
             y: spec.y,
             width: dim.width * scale,
             height: dim.height * scale,
-            surface: spec.y + (sheet.inset ?? PlatformSurfaceInset) * scale      // the line the player's feet rest on
+            surface: spec.y + PlatformSurfaceInset * scale      // the line the player's feet rest on
         });
     }
 }
@@ -221,7 +205,11 @@ function DrawPlatforms()
         if (platform.x + platform.width < CameraX - 50 || platform.x > CameraX + ViewW + 50) continue;     // off screen: skip
         if (!platform.image.complete || platform.image.naturalWidth === 0) continue;              // picture not loaded yet
  
-        ctx.drawImage(platform.image, platform.sx, platform.sy, platform.sw, platform.sh, platform.x, platform.y, platform.width, platform.height);
+        let kx = platform.image.naturalWidth  / platform.sheetW;
+        let ky = platform.image.naturalHeight / platform.sheetH;
+
+        ctx.drawImage(platform.image, platform.sx * kx, platform.sy * ky, platform.sw * kx, platform.sh * ky,
+        platform.x, platform.y, platform.width, platform.height);
         ctx.fillStyle = "red";
         ctx.fillRect(platform.x, platform.y + platform.height, platform.width, 2);
     }
