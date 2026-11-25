@@ -13,7 +13,7 @@ const NpcTypes = {
     OldGnome: {
         image: OldGnomeImage,
         size: 70,
-        name: "Old OldGnome",
+        name: "OldGnome",
         dialogue: "wizardHello"
     }
 };
