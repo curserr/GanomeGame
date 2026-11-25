@@ -12,7 +12,7 @@ OldGnomeImage.src = "OldGnome.png";
 const NpcTypes = {
     OldGnome: {
         image: OldGnomeImage,
-        size: 70,
+        size: 150,
         name: "OldGnome",
         dialogue: "wizardHello"
     }
