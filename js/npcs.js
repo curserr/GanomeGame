@@ -7,7 +7,7 @@
 // =====================================================================
 
 const OldGnomeImage = new Image();
-OldGnome.src = "OldGnome.png";
+OldGnomeImage.src = "OldGnome.png";
 
 const NpcTypes = {
     oldGnome: {
