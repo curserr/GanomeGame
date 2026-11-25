@@ -82,6 +82,17 @@ function CheckPlatformCollision()
         {
             LandingY = platform.surface - PlayerHeight;
         }
+
+        let playerBottom = PlayerHitbox.y + PlayerHitbox.h;
+    let platformBottom = platform.y + platform.height;
+
+    if (playerBottom > platform.y && PlayerHitbox.y < platformBottom)
+    {
+        if (PreviousPlayerX + PlayerWidth <= platform.x)
+            PlayerX = platform.x - PlayerWidth;
+        else if (PreviousPlayerX >= platform.x + platform.width)
+            PlayerX = platform.x + platform.width;
+}
     }
 }
 
