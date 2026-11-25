@@ -50,7 +50,7 @@ const Rooms = {
         background: ["#1b1030", "#3a1d5c"],
         exits: { right: "cave" },
         props: BuildProps(1280, 11),
-        npcs: [{ type: "wizard", x: 900 }],
+        npcs: [{ type: "OldGnome", x: 900 }],
         music: "AmbientBackground1.mp3"
     },
     cave: {
