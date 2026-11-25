@@ -10,11 +10,12 @@ const OldGnomeImage = new Image();
 OldGnomeImage.src = "OldGnome.png";
 
 const NpcTypes = {
-    OldGnome: {
-        image: OldGnomeImage,
-        size: 90,
-        name: "OldGnome",
-        dialogue: "wizardHello"
+   OldGnome: {
+    image: OldGnomeImage,
+    size: 100,
+    offsetY: 8,
+    name: "Old Gnome",
+    dialogue: "wizardHello"
     }
 };
 
@@ -98,10 +99,10 @@ function DrawNpcs()
         if (n.x < CameraX - 150 || n.x > CameraX + ViewW + 150) continue;     // off screen: skip
 
         if (n.def.image)
-    {
+        {
         if (n.def.image.complete && n.def.image.naturalWidth > 0)
-            ctx.drawImage(n.def.image, n.x - n.def.size / 2, FloorY - n.def.size, n.def.size, n.def.size);
-    }
+            ctx.drawImage(n.def.image, n.x - n.def.size / 2, FloorY - n.def.size + (n.def.offsetY || 0), n.def.size, n.def.size);
+        }
     else
     {
     ctx.font = n.def.size + "px serif";
